@@ -1,0 +1,56 @@
+package auth
+
+import (
+	"testing"
+)
+
+func TestSign(t *testing.T) {
+	t.Run("Bad Secret", func(t *testing.T) {
+		s := JWTSecret{secret: []byte{0x00}}
+		_, err := s.Sign("test")
+		if err == nil {
+			t.Error("Expected error for bad signer secret")
+		}
+	})
+
+	t.Run("Good Secret", func(t *testing.T) {
+		s := &JWTSecret{}
+		s.SetSecret([]byte{
+			0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+			0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+			0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+			0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+		})
+		token, err := s.Sign("test")
+		if err != nil {
+			t.Errorf("Error creating token: %s", err)
+		}
+
+		claims, err := s.Validate(token)
+		if err != nil {
+			t.Errorf("Error validating token: %s", err)
+		}
+
+		// Cast role to string
+		r := claims["role"].(string)
+		if "test" != r {
+			t.Error("Role claimed does not match")
+		}
+
+		s2 := JWTSecret{
+			secret: []byte{
+				0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+				0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+				0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+				0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+			},
+		}
+
+		_, err = s2.Validate(token)
+		if err == nil {
+			t.Error("Expected error with validation from wrong key")
+		}
+
+	})
+
+}

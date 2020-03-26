@@ -90,11 +90,9 @@ func (s *JWTSecret) ValidateToken(tokenString string) (jwt.MapClaims, error) {
 	return nil, ErrInvalidToken
 }
 
-// SetSecret allows for the secret of the signer to be set, but not exposed.
+// SetSecret allows for the secret of the signer to be set with a copied byte
+// slice for safety.
 func (s *JWTSecret) SetSecret(secret []byte) {
-	if len(secret) == 0 {
-		return
-	}
 	buf := make([]byte, len(secret))
 	copy(buf, secret)
 	s.Secret = buf

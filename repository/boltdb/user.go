@@ -11,7 +11,7 @@ import (
 
 var userBucket = []byte("users")
 
-var buckets = []string{
+var userBuckets = []string{
 	string(userBucket),
 }
 
@@ -22,7 +22,7 @@ type userRepository struct {
 // NewUserRepository returns a new repo object with the associate bolt.DB
 func NewUserRepository(db *bolt.DB) (user.Repository, error) {
 	err := db.Update(func(tx *bolt.Tx) error {
-		for _, b := range buckets {
+		for _, b := range userBuckets {
 			_, err := tx.CreateBucketIfNotExists([]byte(b))
 			if err != nil {
 				return fmt.Errorf("create bucket: %s", err)
@@ -33,7 +33,7 @@ func NewUserRepository(db *bolt.DB) (user.Repository, error) {
 	return &userRepository{db}, err
 }
 
-// GetAllUsers returns a list of all hpfeeds Identity objects stored in the
+// GetAllUsers returns a list of all user objects stored in the
 // db.
 func (ur *userRepository) GetAllUsers() ([]*model.User, error) {
 	var users []*model.User

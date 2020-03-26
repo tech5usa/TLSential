@@ -1,3 +1,6 @@
+// Package auth provides basic authentication and authorization primitives for
+// use elsewhere in the application.
+// TODO: Maybe move this into auth/jwt
 package auth
 
 import (
@@ -8,23 +11,32 @@ import (
 	jwt "github.com/dgrijalva/jwt-go"
 )
 
-var MinBytes = 32                   // Minimum amount of bytes for secret allowed.
-var ExpiryDuration = 24 * time.Hour // Expire all tokens 24 hours after minting.
+// MinBytes is the minimum amount of bytes for secret allowed.
+var MinBytes = 32
 
-var ErrSecretTooShort = errors.New("Secret length must be at least 32 bytes")
-var ErrInvalidToken = errors.New("Invalid JWT")
+// ExpiryDuration determines that all tokens expire 24 hours after minting.
+var ExpiryDuration = 24 * time.Hour
 
+// ErrSecretTooShort is an signaling the provided secret must be longer.
+var ErrSecretTooShort = errors.New("secret length must be at least 32 bytes")
+
+// ErrInvalidToken is returned if the passed in JWT is unable to be parsed by
+// the library.
+var ErrInvalidToken = errors.New("invalid JWT")
+
+// JWTSecret is the type for holding the signing secret of a JWT.
 type JWTSecret struct {
-	secret []byte
+	Secret []byte
 }
 
 // Sign takes a role string to be stored in the JWT and signed.
 // WARNING: This method is dangerous to call with a cryptographically
 // insecure secret.
 func (s *JWTSecret) Sign(role string) (string, error) {
-	// Sanity check that secret is not empty and reasonable length
-	if len(s.secret) < MinBytes {
-		return "", ErrSecretTooShort
+	// Make sure token is valid
+	err := s.ValidSecret()
+	if err != nil {
+		return "", err
 	}
 
 	// Create a new token object, specifying signing method and the claims
@@ -36,7 +48,7 @@ func (s *JWTSecret) Sign(role string) (string, error) {
 	})
 
 	// Sign and get the complete encoded token as a string using the secret
-	tokenString, err := token.SignedString(s.secret)
+	tokenString, err := token.SignedString(s.Secret)
 	if err != nil {
 		return "", err
 	}
@@ -44,18 +56,26 @@ func (s *JWTSecret) Sign(role string) (string, error) {
 	return tokenString, nil
 }
 
-func (s *JWTSecret) Validate(tokenString string) (jwt.MapClaims, error) {
+// ValidateToken takes a token string, usually provided by the user, and
+// validates whether or not it is properly signed as well as parses out any claims.
+func (s *JWTSecret) ValidateToken(tokenString string) (jwt.MapClaims, error) {
+	// Make sure token is valid
+	err := s.ValidSecret()
+	if err != nil {
+		return nil, err
+	}
+
 	// Parse takes the token string and a function for looking up/returning the
 	// key.
 	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
-		// Don't forget to validate the alg is what you expect:
+		// Don't forget to validate the alg is what you expect
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
 			return nil, fmt.Errorf("Unexpected signing method: %v", token.Header["alg"])
 		}
 
 		// hmacSampleSecret is a []byte containing your
 		// secret, e.g. []byte("my_secret_key")
-		return s.secret, nil
+		return s.Secret, nil
 	})
 
 	if err != nil {
@@ -72,7 +92,20 @@ func (s *JWTSecret) Validate(tokenString string) (jwt.MapClaims, error) {
 
 // SetSecret allows for the secret of the signer to be set, but not exposed.
 func (s *JWTSecret) SetSecret(secret []byte) {
+	if len(secret) == 0 {
+		return
+	}
 	buf := make([]byte, len(secret))
 	copy(buf, secret)
-	s.secret = buf
+	s.Secret = buf
+}
+
+// ValidSecret returns an error if the secret is not long enough. Must be
+// MinBytes long at minimum to be safe.
+func (s *JWTSecret) ValidSecret() error {
+	// Sanity check that secret is not empty and reasonable length
+	if len(s.Secret) < MinBytes {
+		return ErrSecretTooShort
+	}
+	return nil
 }

@@ -6,10 +6,13 @@ import (
 
 func TestSign(t *testing.T) {
 	t.Run("Bad Secret", func(t *testing.T) {
-		s := JWTSecret{secret: []byte{0x00}}
+		s := JWTSecret{Secret: []byte{0x00}}
 		_, err := s.Sign("test")
 		if err == nil {
 			t.Error("Expected error for bad signer secret")
+		}
+		if err != ErrSecretTooShort {
+			t.Errorf("Expected ErrSecretTooShort, got: %s", err.Error())
 		}
 	})
 
@@ -21,12 +24,17 @@ func TestSign(t *testing.T) {
 			0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 			0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 		})
+
 		token, err := s.Sign("test")
 		if err != nil {
 			t.Errorf("Error creating token: %s", err)
 		}
 
-		claims, err := s.Validate(token)
+		// TODO: Add a token using a SigningMethod that is NOT HMAC, we
+		// especially want to add a test for NO signing method that MUST fail.
+		// TODO: Add test to make sure ValidateToken tests ValidSecret as well.
+		// TODO: Add test with a completely invalid token to trigger ErrInvalidToken.
+		claims, err := s.ValidateToken(token)
 		if err != nil {
 			t.Errorf("Error validating token: %s", err)
 		}
@@ -38,7 +46,7 @@ func TestSign(t *testing.T) {
 		}
 
 		s2 := JWTSecret{
-			secret: []byte{
+			Secret: []byte{
 				0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 				0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 				0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
@@ -46,7 +54,7 @@ func TestSign(t *testing.T) {
 			},
 		}
 
-		_, err = s2.Validate(token)
+		_, err = s2.ValidateToken(token)
 		if err == nil {
 			t.Error("Expected error with validation from wrong key")
 		}

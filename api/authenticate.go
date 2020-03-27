@@ -6,6 +6,9 @@ import (
 	"fmt"
 	"net/http"
 	"strings"
+
+	"github.com/ImageWare/TLSential/config"
+	"github.com/ImageWare/TLSential/user"
 )
 
 // ErrAuthFailed is for authentication failures of most types
@@ -15,8 +18,21 @@ var ErrAuthFailed = errors.New("failed to authenticate")
 // not match.
 var ErrAuthInvalidCreds = errors.New("invalid credentials")
 
+type AuthHandler interface {
+	Authenticate() http.HandlerFunc
+}
+
+type authHandler struct {
+	cs config.Service
+	us user.Service
+}
+
+func NewAuthHandler(cs config.Service, us user.Service) AuthHandler {
+	return &authHandler{cs, us}
+}
+
 // AuthHandler parses a Basic Authentication request.
-func AuthHandler(sc *ServerContext) func(w http.ResponseWriter, r *http.Request) {
+func (h *authHandler) Authenticate() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		auth := strings.SplitN(r.Header.Get("Authorization"), " ", 2)
 
@@ -49,7 +65,7 @@ func AuthHandler(sc *ServerContext) func(w http.ResponseWriter, r *http.Request)
 
 		name, pass := pair[0], pair[1]
 
-		u, err := sc.us.GetUser(name)
+		u, err := h.us.GetUser(name)
 		if err != nil || u == nil {
 			// Respond with valid types of authentication.
 			// https://tools.ietf.org/html/rfc7235#section-2.1
@@ -72,8 +88,13 @@ func AuthHandler(sc *ServerContext) func(w http.ResponseWriter, r *http.Request)
 			http.Error(w, ErrAuthInvalidCreds.Error(), http.StatusUnauthorized)
 			return
 		}
+		secret, err := h.cs.JWTSecret()
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
 
-		token, err := sc.JWTSecret.Sign(u.Role)
+		token, err := secret.Sign(u.Role)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return

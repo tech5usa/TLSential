@@ -3,6 +3,7 @@ package api
 import (
 	"github.com/ImageWare/TLSential/auth"
 	"github.com/ImageWare/TLSential/model"
+	"github.com/ImageWare/TLSential/user"
 
 	"encoding/json"
 	"errors"
@@ -30,6 +31,20 @@ var (
 	ErrInvalidUserRole = errors.New("Role does not exist")
 )
 
+type UserHandler interface {
+	Get() http.HandlerFunc
+	Put() http.HandlerFunc
+	Delete() http.HandlerFunc
+}
+
+type userHandler struct {
+	us user.Service
+}
+
+func NewUserHandler(us user.Service) UserHandler {
+	return &userHandler{us}
+}
+
 // UserReq is used for parsing API input
 type UserReq struct {
 	Name     string
@@ -43,9 +58,9 @@ type UserResp struct {
 	Role string
 }
 
-// ValidateUserReq checks that all fields follow a valid format and that the RBAC
+// validateUserReq checks that all fields follow a valid format and that the RBAC
 // role actually exists.
-func ValidateUserReq(u *UserReq) error {
+func validateUserReq(u *UserReq) error {
 	if !validUserName.MatchString(u.Name) {
 		return ErrInvalidUserName
 	}
@@ -61,7 +76,7 @@ func ValidateUserReq(u *UserReq) error {
 	return nil
 }
 
-func userDELETEHandler(sc *ServerContext) func(w http.ResponseWriter, r *http.Request) {
+func (h *userHandler) Delete() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		vars := mux.Vars(r)
 		id := vars["id"]
@@ -69,7 +84,7 @@ func userDELETEHandler(sc *ServerContext) func(w http.ResponseWriter, r *http.Re
 		// DELETE /api/user/
 		// Delete all users
 		if id == "" {
-			err := sc.us.DeleteAllUsers()
+			err := h.us.DeleteAllUsers()
 			if err != nil {
 				log.Printf("apiIdentDELETEHandler, DeleteAllIdentities(), %s", err.Error())
 				http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -80,7 +95,7 @@ func userDELETEHandler(sc *ServerContext) func(w http.ResponseWriter, r *http.Re
 		}
 
 		// Delete user
-		u, err := sc.us.GetUser(id)
+		u, err := h.us.GetUser(id)
 		if err != nil {
 			log.Printf("apiUserDELETEHandler, GetUser(), %s", err.Error())
 			http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -94,7 +109,7 @@ func userDELETEHandler(sc *ServerContext) func(w http.ResponseWriter, r *http.Re
 			return
 		}
 
-		err = sc.us.DeleteUser(id)
+		err = h.us.DeleteUser(id)
 		if err != nil {
 			log.Printf("apiUserDELETEHandler, DeleteUser(), %s", err.Error())
 			http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -107,7 +122,7 @@ func userDELETEHandler(sc *ServerContext) func(w http.ResponseWriter, r *http.Re
 
 }
 
-func userGETHandler(sc *ServerContext) func(w http.ResponseWriter, r *http.Request) {
+func (h *userHandler) Get() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		vars := mux.Vars(r)
 		id := vars["id"]
@@ -115,7 +130,7 @@ func userGETHandler(sc *ServerContext) func(w http.ResponseWriter, r *http.Reque
 		// TODO: Factor out this section into new handler perhaps.
 		// "/api/user/"
 		if id == "" {
-			users, err := sc.us.GetAllUsers()
+			users, err := h.us.GetAllUsers()
 			if err != nil {
 				log.Printf("apiUserGETHandler, GetAllUsers(), %s", err.Error())
 				http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -135,7 +150,7 @@ func userGETHandler(sc *ServerContext) func(w http.ResponseWriter, r *http.Reque
 		}
 
 		// Return user if found
-		u, err := sc.us.GetUser(id)
+		u, err := h.us.GetUser(id)
 		if err != nil {
 			log.Printf("apiUserGETHandler, GetUser(), %s", err.Error())
 			http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -162,7 +177,7 @@ func userGETHandler(sc *ServerContext) func(w http.ResponseWriter, r *http.Reque
 	}
 }
 
-func userPUTHandler(sc *ServerContext) func(w http.ResponseWriter, r *http.Request) {
+func (h *userHandler) Put() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var create bool
 
@@ -176,7 +191,7 @@ func userPUTHandler(sc *ServerContext) func(w http.ResponseWriter, r *http.Reque
 		}
 
 		// Check to see if this user name already exists
-		u, err := sc.us.GetUser(id)
+		u, err := h.us.GetUser(id)
 		if err != nil {
 			log.Printf("apiUserPUTHandler, GetIdentity(), %s", err.Error())
 			http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -209,7 +224,7 @@ func userPUTHandler(sc *ServerContext) func(w http.ResponseWriter, r *http.Reque
 		}
 
 		// Make sure all fields are valid.
-		err = ValidateUserReq(ureq)
+		err = validateUserReq(ureq)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusBadRequest)
 			return
@@ -224,7 +239,7 @@ func userPUTHandler(sc *ServerContext) func(w http.ResponseWriter, r *http.Reque
 		}
 
 		// Save to database
-		err = sc.us.SaveUser(u)
+		err = h.us.SaveUser(u)
 		if err != nil {
 			log.Printf("apiUserPUTHandler, SaveUser(), %s", err.Error())
 			http.Error(w, err.Error(), http.StatusInternalServerError)

@@ -6,64 +6,48 @@ import (
 
 // Create separate read and write permissions
 var (
-	PermHPFRead  = gorbac.NewStdPermission("hpf_read")
-	PermHPFWrite = gorbac.NewStdPermission("hpf_write")
-
-	PermUserRead  = gorbac.NewStdPermission("user_read")
+	// Permission for reading app users
+	PermUserRead = gorbac.NewStdPermission("user_read")
+	// Permissions for editing app users
 	PermUserWrite = gorbac.NewStdPermission("user_write")
 
-	// Just for hpfeeds
-	RoleHPFReader = "hpf_reader"
-	RoleHPFAdmin  = "hpf_admin"
-
-	// Just for user management
+	// Role that has User Read permission
 	RoleUserReader = "user_reader"
-	RoleUserAdmin  = "user_admin"
+	// Role that has User Write and Read permissions
+	RoleUserAdmin = "user_admin"
 
-	// Can control both
+	// Role that will have all permissions.
 	RoleSuperAdmin = "super_admin"
 )
 
-// rbac returns a new instance of gorbac.RBAC for Role-Based Access Controls.
+// InitRBAC returns a new instance of gorbac.RBAC for Role-Based Access Controls.
 func InitRBAC() *gorbac.RBAC {
 	r := gorbac.New()
 
-	// Basic READ rights for HPFeeds
-	rhpfr := gorbac.NewStdRole(RoleHPFReader)
-	rhpfr.Assign(PermHPFRead)
-	r.Add(rhpfr)
-
-	// Read and write for HPFeeds
-	rhpfa := gorbac.NewStdRole(RoleHPFAdmin)
-	rhpfa.Assign(PermHPFRead)
-	rhpfa.Assign(PermHPFWrite)
-	r.Add(rhpfa)
-
-	// Basic READ for HPFBroker users
+	// Basic READ for app users
 	rur := gorbac.NewStdRole(RoleUserReader)
 	rur.Assign(PermUserRead)
 	r.Add(rur)
 
-	// Read and write for HPFBroker users
+	// Read and write for app users
 	rua := gorbac.NewStdRole(RoleUserAdmin)
 	rua.Assign(PermUserRead)
 	rua.Assign(PermUserWrite)
 	r.Add(rua)
 
-	// Super admin inherits both HPF Admin and User Admin
+	// Super admin inherits all roles
 	rsa := gorbac.NewStdRole(RoleSuperAdmin)
 	r.Add(rsa)
-	r.SetParents(RoleSuperAdmin, []string{RoleUserAdmin, RoleHPFAdmin})
+	r.SetParents(RoleSuperAdmin, []string{RoleUserAdmin})
 
 	return r
 }
 
 // ValidRole takes a string and compares it to a list of valid rules. Returns
 // true if there is a match.
+// TODO: Make map for faster lookup.
 func ValidRole(r string) bool {
 	roles := []string{
-		RoleHPFReader,
-		RoleHPFAdmin,
 		RoleUserReader,
 		RoleUserAdmin,
 		RoleSuperAdmin,

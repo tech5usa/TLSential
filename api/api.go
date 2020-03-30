@@ -28,10 +28,10 @@ type APIHandler interface {
 }
 
 type apiHandler struct {
-	uh      UserHandler
-	mh      MiddlewareHandler
-	ah      AuthHandler
-	Version string
+	userHandler UserHandler
+	midHandler  MiddlewareHandler
+	authHandler AuthHandler
+	Version     string
 }
 
 // NewAPIHandler creates a new apiHandler with given UserService and ConfigService.
@@ -41,7 +41,7 @@ func NewAPIHandler(version string, us user.Service, cs config.Service) APIHandle
 	uh := NewUserHandler(us)
 	mh := NewMiddlewareHandler(cs, rbac)
 	ah := NewAuthHandler(cs, us)
-	return &apiHandler{uh: uh, mh: mh, ah: ah, Version: version}
+	return &apiHandler{userHandler: uh, midHandler: mh, authHandler: ah, Version: version}
 }
 
 // TODO: Take a server object so we can display a version number.
@@ -57,42 +57,42 @@ func (h *apiHandler) router() *mux.Router {
 
 	r.HandleFunc("/status", h.Status())
 
-	r.HandleFunc("/api/authenticate", h.ah.Authenticate()).Methods("POST")
+	r.HandleFunc("/api/authenticate", h.authHandler.Authenticate()).Methods("POST")
 
 	r.HandleFunc("/api/user/",
-		h.mh.Permission(
+		h.midHandler.Permission(
 			auth.PermUserRead,
-			h.uh.Get(),
+			h.userHandler.Get(),
+		)).Methods("GET")
+
+	r.HandleFunc("/api/user/{id}",
+		h.midHandler.Permission(
+			auth.PermUserRead,
+			h.userHandler.Get(),
 		)).Methods("GET")
 
 	r.HandleFunc("/api/user/",
-		h.mh.Permission(
+		h.midHandler.Permission(
 			auth.PermUserWrite,
-			h.uh.Put(),
+			h.userHandler.Put(),
 		)).Methods("PUT") // Funnel bad request for proper response.
 
-	r.HandleFunc("/api/user/",
-		h.mh.Permission(
+	r.HandleFunc("/api/user/{id}",
+		h.midHandler.Permission(
 			auth.PermUserWrite,
-			h.uh.Delete(),
+			h.userHandler.Put(),
+		)).Methods("PUT")
+
+	r.HandleFunc("/api/user/",
+		h.midHandler.Permission(
+			auth.PermUserWrite,
+			h.userHandler.Delete(),
 		)).Methods("DELETE")
 
 	r.HandleFunc("/api/user/{id}",
-		h.mh.Permission(
-			auth.PermUserRead,
-			h.uh.Get(),
-		)).Methods("GET")
-
-	r.HandleFunc("/api/user/{id}",
-		h.mh.Permission(
+		h.midHandler.Permission(
 			auth.PermUserWrite,
-			h.uh.Put(),
-		)).Methods("PUT")
-
-	r.HandleFunc("/api/user/{id}",
-		h.mh.Permission(
-			auth.PermUserWrite,
-			h.uh.Delete(),
+			h.userHandler.Delete(),
 		)).Methods("DELETE")
 
 	return r

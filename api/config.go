@@ -22,7 +22,8 @@ type configHandler struct {
 	cs config.Service
 }
 
-func NewConfighHandler(cs config.Service) ConfigHandler {
+// NewConfigHandler takes a config.Service and returns a working ConfigHandler.
+func NewConfigHandler(cs config.Service) ConfigHandler {
 	return &configHandler{cs}
 }
 
@@ -36,6 +37,7 @@ type saResp struct {
 	Password string
 }
 
+// SuperAdmin responds to the api/config/superadmin endpoint.
 func (h *configHandler) SuperAdmin() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		vars := mux.Vars(r)

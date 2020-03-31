@@ -10,7 +10,6 @@ import (
 
 	"github.com/ImageWare/TLSential/config"
 	"github.com/ImageWare/TLSential/user"
-	"github.com/alexedwards/argon2id"
 )
 
 // ErrAuthFailed is for authentication failures of most types
@@ -20,6 +19,8 @@ var ErrAuthFailed = errors.New("failed to authenticate")
 // not match.
 var ErrAuthInvalidCreds = errors.New("invalid credentials")
 
+// AuthHandler provides an interface for all calls to the api/authenticate
+// endpoints.
 type AuthHandler interface {
 	Authenticate() http.HandlerFunc
 }
@@ -29,6 +30,7 @@ type authHandler struct {
 	us user.Service
 }
 
+// NewAuthHandler returns a instantiated AuthHandler for use in a router.
 func NewAuthHandler(cs config.Service, us user.Service) AuthHandler {
 	return &authHandler{cs, us}
 }
@@ -67,7 +69,6 @@ func (h *authHandler) Authenticate() http.HandlerFunc {
 		}
 
 		name, pass := pair[0], pair[1]
-		log.Printf("Authenticate, name = %s, pass = %s", name, pass)
 
 		u, err := h.us.GetUser(name)
 		if err != nil || u == nil {
@@ -78,14 +79,11 @@ func (h *authHandler) Authenticate() http.HandlerFunc {
 			http.Error(w, ErrAuthFailed.Error(), http.StatusUnauthorized)
 			return
 		}
-		log.Printf("Authenticate, name = %s, hash = %s", u.Name, u.Hash)
-
-		hash2, _ := argon2id.CreateHash(pass, argon2id.DefaultParams)
-		log.Printf("hash2: %s", hash2)
 
 		// Parse stored hash and compare
 		match, err := u.ComparePasswordAndHash(pass)
 		if err != nil {
+			log.Printf("Authenticate, ComparePasswordAndHash(), %v", err)
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
@@ -97,14 +95,17 @@ func (h *authHandler) Authenticate() http.HandlerFunc {
 			http.Error(w, ErrAuthInvalidCreds.Error(), http.StatusUnauthorized)
 			return
 		}
+
 		secret, err := h.cs.JWTSecret()
 		if err != nil {
+			log.Printf("Authenticate, JWTSecret(), %v", err)
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
 
 		token, err := secret.Sign(u.Role)
 		if err != nil {
+			log.Printf("Authenticate, Sign(), %v", err)
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}

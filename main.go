@@ -14,6 +14,7 @@ import (
 	"github.com/boltdb/bolt"
 )
 
+// Version is the official version of the server app.
 const Version = "v0.0.1"
 
 func main() {
@@ -95,7 +96,7 @@ func resetSecret(db *bolt.DB) {
 
 // newAppController takes a bolt.DB and builds all necessary repos and usescases
 // for this app.
-func newAPIHandler(db *bolt.DB) api.APIHandler {
+func newAPIHandler(db *bolt.DB) api.Handler {
 	urepo, err := boltdb.NewUserRepository(db)
 	if err != nil {
 		log.Fatal(err)
@@ -109,5 +110,5 @@ func newAPIHandler(db *bolt.DB) api.APIHandler {
 	us := service.NewUserService(urepo)
 	cs := service.NewConfigService(crepo, us)
 
-	return api.NewAPIHandler(Version, us, cs)
+	return api.NewHandler(Version, us, cs)
 }

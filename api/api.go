@@ -22,7 +22,8 @@ var (
 	ErrBodyRequired = errors.New("Body is required for this endpoint") // 400
 )
 
-type APIHandler interface {
+// Handler provides an interface for all api/calls.
+type Handler interface {
 	Status() http.HandlerFunc
 	NewMux() *http.ServeMux
 }
@@ -35,18 +36,18 @@ type apiHandler struct {
 	Version       string
 }
 
-// NewAPIHandler creates a new apiHandler with given UserService and ConfigService.
-func NewAPIHandler(version string, us user.Service, cs config.Service) APIHandler {
+// NewHandler creates a new apiHandler with given UserService and ConfigService.
+func NewHandler(version string, us user.Service, cs config.Service) Handler {
 	// TODO: Make RBAC persistent if needed.
 	rbac := auth.InitRBAC()
 	uh := NewUserHandler(us)
 	mh := NewMiddlewareHandler(cs, rbac)
 	ah := NewAuthHandler(cs, us)
-	ch := NewConfighHandler(cs)
+	ch := NewConfigHandler(cs)
 	return &apiHandler{userHandler: uh, midHandler: mh, authHandler: ah, configHandler: ch, Version: version}
 }
 
-// TODO: Take a server object so we can display a version number.
+// Status returns the current version of the server.
 func (h *apiHandler) Status() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprintf(w, "Version: %s", h.Version)

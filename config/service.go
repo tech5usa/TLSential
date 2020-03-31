@@ -10,6 +10,6 @@ type Service interface {
 	JWTSecret() (*auth.JWTSecret, error)
 	SuperAdmin() (string, error)
 	SetJWTSecret([]byte) error
-	CreateSuperAdmin(string) (*model.User, error)
+	CreateSuperAdmin(string) (user *model.User, password string, err error)
 	ResetSuperAdmin() error
 }

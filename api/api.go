@@ -28,10 +28,11 @@ type APIHandler interface {
 }
 
 type apiHandler struct {
-	userHandler UserHandler
-	midHandler  MiddlewareHandler
-	authHandler AuthHandler
-	Version     string
+	userHandler   UserHandler
+	midHandler    MiddlewareHandler
+	authHandler   AuthHandler
+	configHandler ConfigHandler
+	Version       string
 }
 
 // NewAPIHandler creates a new apiHandler with given UserService and ConfigService.
@@ -41,7 +42,8 @@ func NewAPIHandler(version string, us user.Service, cs config.Service) APIHandle
 	uh := NewUserHandler(us)
 	mh := NewMiddlewareHandler(cs, rbac)
 	ah := NewAuthHandler(cs, us)
-	return &apiHandler{userHandler: uh, midHandler: mh, authHandler: ah, Version: version}
+	ch := NewConfighHandler(cs)
+	return &apiHandler{userHandler: uh, midHandler: mh, authHandler: ah, configHandler: ch, Version: version}
 }
 
 // TODO: Take a server object so we can display a version number.
@@ -58,6 +60,8 @@ func (h *apiHandler) router() *mux.Router {
 	r.HandleFunc("/status", h.Status())
 
 	r.HandleFunc("/api/authenticate", h.authHandler.Authenticate()).Methods("POST")
+
+	r.HandleFunc("/api/config/superadmin/{id}", h.configHandler.SuperAdmin()).Methods("POST")
 
 	r.HandleFunc("/api/user/",
 		h.midHandler.Permission(

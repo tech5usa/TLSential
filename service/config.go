@@ -3,23 +3,29 @@ package service
 import (
 	"crypto/rand"
 	"encoding/base64"
+	"errors"
 
 	"github.com/ImageWare/TLSential/auth"
 	"github.com/ImageWare/TLSential/config"
 	"github.com/ImageWare/TLSential/model"
+	"github.com/ImageWare/TLSential/user"
 )
 
 // randBytes is the number of bytes of entropy for SA password
 const randBytes = 32
 
+// ErrSuperAdminExists means a new SA cannot be created.
+var ErrSuperAdminExists = errors.New("super admin already exists")
+
 type configService struct {
-	repo config.Repository
+	repo        config.Repository
+	userService user.Service
 }
 
 // NewConfigService returns a new instance of a configService initialized with the
 // given repository.
-func NewConfigService(repo config.Repository) config.Service {
-	return &configService{repo}
+func NewConfigService(repo config.Repository, us user.Service) config.Service {
+	return &configService{repo, us}
 }
 
 // JWTSecret provides the current JSON Web Token signing secret in use in the config.
@@ -41,19 +47,33 @@ func (s *configService) SetJWTSecret(secret []byte) error {
 
 // CreateSuperAdmin will take a username, generate a new password, and save this
 // user with SuperAdmin permissions.
-func (s *configService) CreateSuperAdmin(name string) (*model.User, error) {
+// TODO: Refactor so we don't return a full user and pass?
+func (s *configService) CreateSuperAdmin(name string) (*model.User, string, error) {
+	sa, err := s.repo.SuperAdmin()
+	if err != nil {
+		return nil, "", err
+	}
+	if sa != "" {
+		return nil, "", ErrSuperAdminExists
+	}
+
 	p, err := newPassword()
 	if err != nil {
-		return nil, err
+		return nil, "", err
 	}
 
 	u, err := model.NewUser(name, p, auth.RoleSuperAdmin)
 	if err != nil {
-		return nil, err
+		return nil, "", err
+	}
+
+	err = s.userService.SaveUser(u)
+	if err != nil {
+		return nil, "", err
 	}
 
 	err = s.repo.SetSuperAdmin(name)
-	return u, err
+	return u, p, err
 }
 
 // ResetSuperAdmin will delete the currently stored username for Super Admin,

@@ -1,6 +1,7 @@
 package main
 
 import (
+	"crypto/rand"
 	"flag"
 	"fmt"
 	"log"
@@ -36,6 +37,13 @@ func main() {
 	}
 	defer db.Close()
 
+	if secretReset {
+		resetSecret(db)
+
+	}
+
+	initSecret(db)
+
 	ah := newAPIHandler(db)
 
 	// Run http server concurrently
@@ -52,6 +60,39 @@ func main() {
 
 }
 
+func initSecret(db *bolt.DB) {
+	crepo, err := boltdb.NewConfigRepository(db)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	s, err := crepo.JWTSecret()
+	if err != nil {
+		log.Fatal(err)
+	}
+	if s.ValidSecret() != nil {
+		c := 32
+		b := make([]byte, c)
+		_, err := rand.Read(b)
+		if err != nil {
+			log.Fatal(err)
+		}
+		crepo.SetJWTSecret(b)
+	}
+}
+
+func resetSecret(db *bolt.DB) {
+	crepo, err := boltdb.NewConfigRepository(db)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	err = crepo.SetJWTSecret(nil)
+	if err != nil {
+		log.Fatal(err)
+	}
+}
+
 // newAppController takes a bolt.DB and builds all necessary repos and usescases
 // for this app.
 func newAPIHandler(db *bolt.DB) api.APIHandler {
@@ -66,7 +107,7 @@ func newAPIHandler(db *bolt.DB) api.APIHandler {
 	}
 
 	us := service.NewUserService(urepo)
-	cs := service.NewConfigService(crepo)
+	cs := service.NewConfigService(crepo, us)
 
 	return api.NewAPIHandler(Version, us, cs)
 }

@@ -4,11 +4,13 @@ import (
 	"encoding/base64"
 	"errors"
 	"fmt"
+	"log"
 	"net/http"
 	"strings"
 
 	"github.com/ImageWare/TLSential/config"
 	"github.com/ImageWare/TLSential/user"
+	"github.com/alexedwards/argon2id"
 )
 
 // ErrAuthFailed is for authentication failures of most types
@@ -59,20 +61,27 @@ func (h *authHandler) Authenticate() http.HandlerFunc {
 		if len(pair) != 2 {
 			// TODO: Provide better response.
 			// https://tools.ietf.org/html/rfc7231#section-6.5.1
+			log.Printf("Authenticate, len(pair)")
 			http.Error(w, ErrAuthFailed.Error(), http.StatusBadRequest)
 			return
 		}
 
 		name, pass := pair[0], pair[1]
+		log.Printf("Authenticate, name = %s, pass = %s", name, pass)
 
 		u, err := h.us.GetUser(name)
 		if err != nil || u == nil {
 			// Respond with valid types of authentication.
 			// https://tools.ietf.org/html/rfc7235#section-2.1
+			log.Printf("Authenticate, GetUser(), %v", err)
 			w.Header().Set("WWW-Authenticate", "Basic")
 			http.Error(w, ErrAuthFailed.Error(), http.StatusUnauthorized)
 			return
 		}
+		log.Printf("Authenticate, name = %s, hash = %s", u.Name, u.Hash)
+
+		hash2, _ := argon2id.CreateHash(pass, argon2id.DefaultParams)
+		log.Printf("hash2: %s", hash2)
 
 		// Parse stored hash and compare
 		match, err := u.ComparePasswordAndHash(pass)

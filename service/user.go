@@ -23,14 +23,11 @@ func (us userService) GetAllUsers() ([]*model.User, error) {
 // GetUser returns a pointer to the User with a matching name. If none is found,
 // an error is returned and the user is nil.
 func (us userService) GetUser(name string) (*model.User, error) {
-	u, err := us.repo.GetUser(name)
-	if err != nil {
-		return nil, err
-	}
-	return u, nil
+	return us.repo.GetUser(name)
 }
 
 // SaveUser simply saves a user to the repo.
+// TODO: Add sanity checks here
 func (us userService) SaveUser(u *model.User) error {
 	return us.repo.SaveUser(u)
 }

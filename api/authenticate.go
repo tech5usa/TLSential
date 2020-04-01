@@ -4,6 +4,7 @@ import (
 	"encoding/base64"
 	"errors"
 	"fmt"
+	"log"
 	"net/http"
 	"strings"
 
@@ -18,6 +19,8 @@ var ErrAuthFailed = errors.New("failed to authenticate")
 // not match.
 var ErrAuthInvalidCreds = errors.New("invalid credentials")
 
+// AuthHandler provides an interface for all calls to the api/authenticate
+// endpoints.
 type AuthHandler interface {
 	Authenticate() http.HandlerFunc
 }
@@ -27,6 +30,7 @@ type authHandler struct {
 	us user.Service
 }
 
+// NewAuthHandler returns a instantiated AuthHandler for use in a router.
 func NewAuthHandler(cs config.Service, us user.Service) AuthHandler {
 	return &authHandler{cs, us}
 }
@@ -59,6 +63,7 @@ func (h *authHandler) Authenticate() http.HandlerFunc {
 		if len(pair) != 2 {
 			// TODO: Provide better response.
 			// https://tools.ietf.org/html/rfc7231#section-6.5.1
+			log.Printf("Authenticate, len(pair)")
 			http.Error(w, ErrAuthFailed.Error(), http.StatusBadRequest)
 			return
 		}
@@ -69,6 +74,7 @@ func (h *authHandler) Authenticate() http.HandlerFunc {
 		if err != nil || u == nil {
 			// Respond with valid types of authentication.
 			// https://tools.ietf.org/html/rfc7235#section-2.1
+			log.Printf("Authenticate, GetUser(), %v", err)
 			w.Header().Set("WWW-Authenticate", "Basic")
 			http.Error(w, ErrAuthFailed.Error(), http.StatusUnauthorized)
 			return
@@ -77,6 +83,7 @@ func (h *authHandler) Authenticate() http.HandlerFunc {
 		// Parse stored hash and compare
 		match, err := u.ComparePasswordAndHash(pass)
 		if err != nil {
+			log.Printf("Authenticate, ComparePasswordAndHash(), %v", err)
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
@@ -88,14 +95,17 @@ func (h *authHandler) Authenticate() http.HandlerFunc {
 			http.Error(w, ErrAuthInvalidCreds.Error(), http.StatusUnauthorized)
 			return
 		}
+
 		secret, err := h.cs.JWTSecret()
 		if err != nil {
+			log.Printf("Authenticate, JWTSecret(), %v", err)
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
 
 		token, err := secret.Sign(u.Role)
 		if err != nil {
+			log.Printf("Authenticate, Sign(), %v", err)
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}

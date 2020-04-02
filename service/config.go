@@ -17,6 +17,7 @@ const randBytes = 32
 // ErrSuperAdminExists means a new SA cannot be created.
 var ErrSuperAdminExists = errors.New("super admin already exists")
 
+// configService is our app implementation of config.Service
 type configService struct {
 	repo        config.Repository
 	userService user.Service
@@ -72,6 +73,7 @@ func (s *configService) CreateSuperAdmin(name string) (*model.User, string, erro
 		return nil, "", err
 	}
 
+	// TODO: If SetSA fails, User will still exist.
 	err = s.repo.SetSuperAdmin(name)
 	return u, p, err
 }
@@ -82,8 +84,8 @@ func (s *configService) ResetSuperAdmin() error {
 	return s.repo.SetSuperAdmin("")
 }
 
-// newPassword generates 32 cryptographically secure random bytes, base64
-// encodes it, and returns it. 256 bits of entropy.
+// newPassword generates cryptographically secure random bytes, base64
+// encodes it, and returns it.
 func newPassword() (string, error) {
 	c := randBytes
 	b := make([]byte, c)

@@ -11,6 +11,8 @@ var (
 	// Permissions for editing app users
 	PermUserWrite = gorbac.NewStdPermission("user_write")
 
+	PermChallengeAdmin = gorbac.NewStdPermission("challenge")
+
 	// Role that has User Read permission
 	RoleUserReader = "user_reader"
 	// Role that has User Write and Read permissions
@@ -37,6 +39,7 @@ func InitRBAC() *gorbac.RBAC {
 
 	// Super admin inherits all roles
 	rsa := gorbac.NewStdRole(RoleSuperAdmin)
+	rsa.Assign(PermChallengeAdmin)
 	r.Add(rsa)
 	r.SetParents(RoleSuperAdmin, []string{RoleUserAdmin})
 

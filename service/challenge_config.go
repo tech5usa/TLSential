@@ -2,6 +2,7 @@ package service
 
 import (
 	"github.com/ImageWare/TLSential/challenge_config"
+	"github.com/ImageWare/TLSential/model"
 	"github.com/go-acme/lego/v3/challenge"
 	"github.com/go-acme/lego/v3/providers/dns/cloudflare"
 )
@@ -36,4 +37,23 @@ func (s *challengeConfigService) NewDNSProvider() (challenge.Provider, error) {
 	}
 
 	return dnsChallenge, nil
+}
+
+func (s *challengeConfigService) Auth() (*model.ChallengeConfig, error) {
+	email, err := s.repo.AuthEmail()
+	if err != nil {
+		return nil, err
+	}
+	key, err := s.repo.AuthKey()
+
+	return &model.ChallengeConfig{AuthEmail: email, AuthKey: key}, err
+}
+
+func (s *challengeConfigService) SetAuth(email, key string) error {
+	err := s.repo.SetAuthEmail(email)
+	if err != nil {
+		return err
+	}
+	err = s.repo.SetAuthKey(key)
+	return err
 }

@@ -1,5 +1,8 @@
 package model
 
+// TODO: Rename to Providers and flesh out with a few more details like which
+// kind of DNS provider, an ID, etc.
+
 // ChallengeConfig provides all necessary information for a Cloudflare DNS
 // Challenge provider.
 type ChallengeConfig struct {

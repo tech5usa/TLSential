@@ -15,7 +15,7 @@ const (
 )
 
 var challengeConfigBuckets = []string{
-	configBucket,
+	challengeConfigBucket,
 }
 
 type challengeConfigRepository struct {
@@ -42,8 +42,10 @@ func (r *challengeConfigRepository) AuthEmail() (string, error) {
 	err := r.DB.View(func(tx *bolt.Tx) error {
 		b := tx.Bucket([]byte(challengeConfigBucket))
 		v := b.Get([]byte(authEmailKey))
+		if v != nil {
+			email = string(v)
+		}
 
-		email = string(v)
 		return nil
 	})
 	return email, err

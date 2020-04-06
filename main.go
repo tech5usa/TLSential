@@ -107,8 +107,11 @@ func newAPIHandler(db *bolt.DB) api.Handler {
 		log.Fatal(err)
 	}
 
+	chrepo, err := boltdb.NewChallengeConfigRepository(db)
+
 	us := service.NewUserService(urepo)
 	cs := service.NewConfigService(crepo, us)
+	chs := service.NewChallengeConfigService(chrepo)
 
-	return api.NewHandler(Version, us, cs)
+	return api.NewHandler(Version, us, cs, chs)
 }

@@ -13,6 +13,8 @@ var (
 
 	PermChallengeAdmin = gorbac.NewStdPermission("challenge")
 
+	PermCertAdmin = gorbac.NewStdPermission("cert")
+
 	// Role that has User Read permission
 	RoleUserReader = "user_reader"
 	// Role that has User Write and Read permissions
@@ -40,6 +42,7 @@ func InitRBAC() *gorbac.RBAC {
 	// Super admin inherits all roles
 	rsa := gorbac.NewStdRole(RoleSuperAdmin)
 	rsa.Assign(PermChallengeAdmin)
+	rsa.Assign(PermCertAdmin)
 	r.Add(rsa)
 	r.SetParents(RoleSuperAdmin, []string{RoleUserAdmin})
 

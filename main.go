@@ -108,10 +108,19 @@ func newAPIHandler(db *bolt.DB) api.Handler {
 	}
 
 	chrepo, err := boltdb.NewChallengeConfigRepository(db)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	certrepo, err := boltdb.NewCertificateRepository(db)
+	if err != nil {
+		log.Fatal(err)
+	}
 
 	us := service.NewUserService(urepo)
 	cs := service.NewConfigService(crepo, us)
 	chs := service.NewChallengeConfigService(chrepo)
+	crs := service.NewCertificateService(certrepo)
 
-	return api.NewHandler(Version, us, cs, chs)
+	return api.NewHandler(Version, us, cs, chs, crs)
 }

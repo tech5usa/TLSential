@@ -16,26 +16,26 @@ func NewCertificateService(cr certificate.Repository) certificate.Service {
 
 // AllCerts returns a list of all Cert objects stored in the repo.
 func (cs *certService) AllCerts() ([]*model.Certificate, error) {
-	return cs.AllCerts()
+	return cs.cr.AllCerts()
 }
 
 // Cert takes an id and returns their whole cert object.
 func (cs *certService) Cert(id string) (*model.Certificate, error) {
-	return cs.Cert(id)
+	return cs.cr.Cert(id)
 }
 
 // SaveCert persists a Cert in BoltStore.
 func (cs *certService) SaveCert(c *model.Certificate) error {
-	return cs.SaveCert(c)
+	return cs.cr.SaveCert(c)
 }
 
 // DeleteCert removes any saved Cert object matching the id
 func (cs *certService) DeleteCert(id string) error {
-	return cs.DeleteCert(id)
+	return cs.cr.DeleteCert(id)
 }
 
 // DeleteAllCerts deletes the Bolt bucket holding certs and recreates
 // it, essentially deleting all objects.
 func (cs *certService) DeleteAllCerts() error {
-	return cs.DeleteAllCerts()
+	return cs.cr.DeleteAllCerts()
 }

@@ -12,7 +12,7 @@ import (
 )
 
 // randBytes is the number of bytes of entropy for SA password
-const randBytes = 32
+const randBytes = 16
 
 // ErrSuperAdminExists means a new SA cannot be created.
 var ErrSuperAdminExists = errors.New("super admin already exists")
@@ -93,6 +93,6 @@ func newPassword() (string, error) {
 	if err != nil {
 		return "", err
 	}
-	pass := base64.StdEncoding.EncodeToString(b)
+	pass := base64.RawURLEncoding.EncodeToString(b)
 	return pass, nil
 }

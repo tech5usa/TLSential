@@ -6,6 +6,7 @@ import (
 	"net/http"
 
 	"github.com/ImageWare/TLSential/auth"
+	"github.com/ImageWare/TLSential/certificate"
 	"github.com/ImageWare/TLSential/challenge_config"
 	"github.com/ImageWare/TLSential/config"
 	"github.com/ImageWare/TLSential/user"
@@ -30,16 +31,17 @@ type Handler interface {
 }
 
 type apiHandler struct {
-	userHandler      UserHandler
-	midHandler       MiddlewareHandler
-	authHandler      AuthHandler
-	configHandler    ConfigHandler
-	challengeHandler ChallengeHandler
-	Version          string
+	userHandler        UserHandler
+	midHandler         MiddlewareHandler
+	authHandler        AuthHandler
+	configHandler      ConfigHandler
+	challengeHandler   ChallengeHandler
+	certificateHandler CertificateHandler
+	Version            string
 }
 
 // NewHandler creates a new apiHandler with given UserService and ConfigService.
-func NewHandler(version string, us user.Service, cs config.Service, chs challenge_config.Service) Handler {
+func NewHandler(version string, us user.Service, cs config.Service, chs challenge_config.Service, crs certificate.Service) Handler {
 	// TODO: Make RBAC persistent if needed.
 	rbac := auth.InitRBAC()
 	uh := NewUserHandler(us)
@@ -47,7 +49,8 @@ func NewHandler(version string, us user.Service, cs config.Service, chs challeng
 	ah := NewAuthHandler(cs, us)
 	ch := NewConfigHandler(cs)
 	chah := NewChallengeHandler(chs)
-	return &apiHandler{userHandler: uh, midHandler: mh, authHandler: ah, configHandler: ch, challengeHandler: chah, Version: version}
+	crh := NewCertificateHandler(crs)
+	return &apiHandler{userHandler: uh, midHandler: mh, authHandler: ah, configHandler: ch, challengeHandler: chah, certificateHandler: crh, Version: version}
 }
 
 // Status returns the current version of the server.
@@ -66,6 +69,25 @@ func (h *apiHandler) router() *mux.Router {
 	r.HandleFunc("/api/authenticate", h.authHandler.Authenticate()).Methods("POST")
 
 	r.HandleFunc("/api/config/superadmin/{id}", h.configHandler.SuperAdmin()).Methods("POST")
+
+	// api/certificate
+	r.HandleFunc("/api/certificate",
+		h.midHandler.Permission(
+			auth.PermCertAdmin,
+			h.certificateHandler.Get(),
+		)).Methods("GET")
+
+	r.HandleFunc("/api/certificate/{id}",
+		h.midHandler.Permission(
+			auth.PermCertAdmin,
+			h.certificateHandler.Get(),
+		)).Methods("GET")
+
+	r.HandleFunc("/api/certificate",
+		h.midHandler.Permission(
+			auth.PermCertAdmin,
+			h.certificateHandler.Post(),
+		)).Methods("POST")
 
 	// api/challenge
 	r.HandleFunc("/api/challenge",

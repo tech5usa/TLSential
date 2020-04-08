@@ -1,12 +1,10 @@
 package api
 
 import (
-	"encoding/base64"
 	"errors"
 	"fmt"
 	"log"
 	"net/http"
-	"strings"
 
 	"github.com/ImageWare/TLSential/config"
 	"github.com/ImageWare/TLSential/user"
@@ -38,39 +36,18 @@ func NewAuthHandler(cs config.Service, us user.Service) AuthHandler {
 // AuthHandler parses a Basic Authentication request.
 func (h *authHandler) Authenticate() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		auth := strings.SplitN(r.Header.Get("Authorization"), " ", 2)
+
+		username, password, ok := r.BasicAuth()
 
 		// Make sure this is of the format "Basic {credentials}"
-		if len(auth) != 2 || auth[0] != "Basic" {
+		if !ok {
 			// https://tools.ietf.org/html/rfc7231#section-6.5.1
+			log.Printf("Authenticate, parsing credentials not ok")
 			http.Error(w, ErrAuthFailed.Error(), http.StatusBadRequest)
 			return
 		}
 
-		credentials, err := base64.StdEncoding.DecodeString(auth[1])
-		if err != nil {
-			// TODO: Provide better response.
-			// https://tools.ietf.org/html/rfc7231#section-6.5.1
-			http.Error(w, ErrAuthFailed.Error(), http.StatusBadRequest)
-			return
-		}
-
-		// SplitN because we only want to split on the first ":" as a password
-		// may contain special characters.
-		pair := strings.SplitN(string(credentials), ":", 2)
-
-		// Validate we have a username and password
-		if len(pair) != 2 {
-			// TODO: Provide better response.
-			// https://tools.ietf.org/html/rfc7231#section-6.5.1
-			log.Printf("Authenticate, len(pair)")
-			http.Error(w, ErrAuthFailed.Error(), http.StatusBadRequest)
-			return
-		}
-
-		name, pass := pair[0], pair[1]
-
-		u, err := h.us.GetUser(name)
+		u, err := h.us.GetUser(username)
 		if err != nil || u == nil {
 			// Respond with valid types of authentication.
 			// https://tools.ietf.org/html/rfc7235#section-2.1
@@ -81,7 +58,7 @@ func (h *authHandler) Authenticate() http.HandlerFunc {
 		}
 
 		// Parse stored hash and compare
-		match, err := u.ComparePasswordAndHash(pass)
+		match, err := u.ComparePasswordAndHash(password)
 		if err != nil {
 			log.Printf("Authenticate, ComparePasswordAndHash(), %v", err)
 			http.Error(w, err.Error(), http.StatusInternalServerError)

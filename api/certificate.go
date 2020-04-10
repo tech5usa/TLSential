@@ -42,6 +42,7 @@ type CertResp struct {
 	CertStableURL string
 	Expiry        time.Time
 	Issued        bool
+	LastError     string
 }
 
 // TODO: Add validation function to make sure domains are actual domains.
@@ -122,6 +123,7 @@ func (h *certHandler) Get() http.HandlerFunc {
 					CertStableURL: c.CertStableURL,
 					Expiry:        c.Expiry,
 					Issued:        c.Issued,
+					LastError:     c.LastError.Error(),
 				}
 				crs = append(crs, cr)
 			}
@@ -160,6 +162,7 @@ func (h *certHandler) Get() http.HandlerFunc {
 			CertStableURL: c.CertStableURL,
 			Expiry:        c.Expiry,
 			Issued:        c.Issued,
+			LastError:     c.LastError.Error(),
 		}
 
 		w.WriteHeader(http.StatusOK)
@@ -216,6 +219,7 @@ func (h *certHandler) Post() http.HandlerFunc {
 			CertStableURL: c.CertStableURL,
 			Expiry:        c.Expiry,
 			Issued:        c.Issued,
+			LastError:     c.LastError.Error(),
 		}
 		out, err := json.Marshal(cresp)
 		if err != nil {

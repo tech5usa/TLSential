@@ -10,6 +10,7 @@ import (
 	"github.com/ImageWare/TLSential/api"
 	"github.com/ImageWare/TLSential/repository/boltdb"
 	"github.com/ImageWare/TLSential/service"
+	"github.com/go-acme/lego/registration"
 
 	"github.com/boltdb/bolt"
 )
@@ -21,15 +22,24 @@ func main() {
 	fmt.Println("///- Starting up TLSential")
 	fmt.Printf("//- Version %s\n", Version)
 
+	var email string
 	var port int
 	var dbFile string
 	var secretReset bool
 
 	// Grab any command line arguments
+	flag.StringVar(&email, "email", "test@example.com", "Email address for Let's Encrypt account")
 	flag.IntVar(&port, "port", 80, "port for webserver to run on")
 	flag.StringVar(&dbFile, "database file", "tlsential.db", "filename for boltdb database")
 	flag.BoolVar(&secretReset, "secret-reset", false, "reset the JWT secret - invalidates all API sessions")
 	flag.Parse()
+
+	// New users will need to register
+	reg, err := client.Registration.Register(registration.RegisterOptions{TermsOfServiceAgreed: true})
+	if err != nil {
+		log.Fatal(err)
+	}
+	myUser.Registration = reg
 
 	// Open our database file.
 	db, err := bolt.Open(dbFile, 0666, nil)

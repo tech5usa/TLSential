@@ -33,6 +33,8 @@ type Certificate struct {
 
 	// TODO: Add DNS Configuration foreign key when we allow for more than one
 	// DNS Configuration object
+
+	LastError error
 }
 
 func NewCertificate(domains []string) *Certificate {

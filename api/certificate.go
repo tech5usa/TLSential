@@ -1,15 +1,15 @@
 package api
 
 import (
-	"time"
-
-	"github.com/ImageWare/TLSential/certificate"
-	"github.com/ImageWare/TLSential/model"
-
 	"encoding/json"
 	"fmt"
 	"log"
 	"net/http"
+	"time"
+
+	"github.com/ImageWare/TLSential/acme"
+	"github.com/ImageWare/TLSential/certificate"
+	"github.com/ImageWare/TLSential/model"
 
 	"github.com/gorilla/mux"
 )
@@ -21,16 +21,18 @@ type CertificateHandler interface {
 }
 
 type certHandler struct {
-	cs certificate.Service
+	cs   certificate.Service
+	acme acme.Service
 }
 
-func NewCertificateHandler(cs certificate.Service) CertificateHandler {
-	return &certHandler{cs}
+func NewCertificateHandler(cs certificate.Service, as acme.Service) CertificateHandler {
+	return &certHandler{cs, as}
 }
 
 // CertReq is used for parsing API input
 type CertReq struct {
 	Domains []string
+	Email   string
 }
 
 // CertResp is used for exporting User data via API responses
@@ -42,6 +44,8 @@ type CertResp struct {
 	CertStableURL string
 	Expiry        time.Time
 	Issued        bool
+	LastError     string
+	ACMEEmail     string
 }
 
 // TODO: Add validation function to make sure domains are actual domains.
@@ -113,7 +117,12 @@ func (h *certHandler) Get() http.HandlerFunc {
 			}
 
 			var crs []*CertResp
+
 			for _, c := range certs {
+				var lastError string
+				if c.LastError != nil {
+					lastError = c.LastError.Error()
+				}
 				cr := &CertResp{
 					ID:            c.ID,
 					CommonName:    c.CommonName,
@@ -122,6 +131,8 @@ func (h *certHandler) Get() http.HandlerFunc {
 					CertStableURL: c.CertStableURL,
 					Expiry:        c.Expiry,
 					Issued:        c.Issued,
+					LastError:     lastError,
+					ACMEEmail:     c.ACMEEmail,
 				}
 				crs = append(crs, cr)
 			}
@@ -152,6 +163,10 @@ func (h *certHandler) Get() http.HandlerFunc {
 		}
 
 		// Make an appropriate response object (ie. pkey returned)
+		var lastError string
+		if c.LastError != nil {
+			lastError = c.LastError.Error()
+		}
 		cr := &CertResp{
 			ID:            c.ID,
 			CommonName:    c.CommonName,
@@ -160,6 +175,8 @@ func (h *certHandler) Get() http.HandlerFunc {
 			CertStableURL: c.CertStableURL,
 			Expiry:        c.Expiry,
 			Issued:        c.Issued,
+			LastError:     lastError,
+			ACMEEmail:     c.ACMEEmail,
 		}
 
 		w.WriteHeader(http.StatusOK)
@@ -191,7 +208,8 @@ func (h *certHandler) Post() http.HandlerFunc {
 		}
 
 		// Create new Certificate obj.
-		c := model.NewCertificate(creq.Domains)
+		// TODO: Not all errors are Server Errors.
+		c, err := model.NewCertificate(creq.Domains, creq.Email)
 		if err != nil {
 			log.Printf("api CertHandler POST, NewCertificate(), %s", err.Error())
 			http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -206,6 +224,8 @@ func (h *certHandler) Post() http.HandlerFunc {
 			return
 		}
 
+		go h.acme.Trigger(c.ID)
+
 		// Build a response obj to return, specifically leaving out
 		// Keys and Certs
 		cresp := &CertResp{
@@ -216,6 +236,8 @@ func (h *certHandler) Post() http.HandlerFunc {
 			CertStableURL: c.CertStableURL,
 			Expiry:        c.Expiry,
 			Issued:        c.Issued,
+			LastError:     "",
+			ACMEEmail:     c.ACMEEmail,
 		}
 		out, err := json.Marshal(cresp)
 		if err != nil {

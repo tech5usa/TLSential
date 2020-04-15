@@ -10,8 +10,10 @@ import (
 const (
 	challengeConfigBucket = "challenge_config"
 
-	authEmailKey = "authemail"
-	authKeyKey   = "authkey"
+	authEmailKey   = "authemail"
+	authKeyKey     = "authkey"
+	leUserEmailKey = "leemail"
+	leUserKeyKey   = "lekey"
 )
 
 var challengeConfigBuckets = []string{

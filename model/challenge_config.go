@@ -11,12 +11,4 @@ type ChallengeConfig struct {
 
 	// AuthKey is the API key to use to then retrieve a Cloudflare API token.
 	AuthKey string
-
-	// TODO: Refactor this out into another model.
-	LEUserEmail string
-	LEUserKey   []byte
-}
-
-func NewChallengeConfig(email, key string) *ChallengeConfig {
-	return &ChallengeConfig{email, key}
 }

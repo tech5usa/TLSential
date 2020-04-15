@@ -2,6 +2,7 @@ package model
 
 import (
 	"crypto"
+	"crypto/ecdsa"
 
 	"github.com/go-acme/lego/registration"
 )
@@ -9,7 +10,7 @@ import (
 type LEUser struct {
 	Email        string
 	Registration *registration.Resource
-	Key          crypto.PrivateKey
+	Key          *ecdsa.PrivateKey
 }
 
 func (u *LEUser) GetEmail() string {

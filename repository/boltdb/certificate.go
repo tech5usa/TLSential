@@ -1,12 +1,17 @@
 package boltdb
 
 import (
+	"crypto/ecdsa"
+	"crypto/x509"
 	"encoding/json"
+	"encoding/pem"
 	"fmt"
+	"time"
 
 	"github.com/ImageWare/TLSential/certificate"
 	"github.com/ImageWare/TLSential/model"
 	"github.com/boltdb/bolt"
+	"github.com/go-acme/lego/v3/registration"
 )
 
 var certBucket = []byte("certs")
@@ -17,6 +22,35 @@ var certBuckets = []string{
 
 type certRepository struct {
 	*bolt.DB
+}
+
+// Used as a middleman to encode in json for storage, purely for
+// ecdsa.PrivateKey storage.
+type encodedCert struct {
+	ID string
+
+	Domains    []string
+	CommonName string
+
+	CertURL       string
+	CertStableURL string
+
+	PrivateKey        []byte
+	IssuerCertificate []byte
+
+	Issued bool
+
+	Expiry time.Time
+
+	LastError error
+
+	ACMEEmail        string
+	ACMERegistration *registration.Resource
+
+	// Encode key so we can store it.
+	// TODO: In go1.15, we should see a JSON Marshal for ecdsa.PrivateKeys, and
+	// we can drop this whole struct.
+	ACMEKey string
 }
 
 // NewCertificateRepository returns a new repo object with the associate bolt.DB
@@ -36,49 +70,100 @@ func NewCertificateRepository(db *bolt.DB) (certificate.Repository, error) {
 // AllCerts returns a list of all Cert objects stored in the
 // db.
 func (cr *certRepository) AllCerts() ([]*model.Certificate, error) {
-	var certs []*model.Certificate
+	var ecerts []*encodedCert
 	err := cr.DB.View(func(tx *bolt.Tx) error {
 		b := tx.Bucket(certBucket)
 
 		c := b.Cursor()
 
 		for k, v := c.First(); k != nil; k, v = c.Next() {
-			c := &model.Certificate{}
+			c := &encodedCert{}
 			err := json.Unmarshal(v, &c)
 			if err != nil {
 				return err
 			}
 
-			certs = append(certs, c)
+			ecerts = append(ecerts, c)
 		}
 
 		return nil
 	})
+
+	var certs []*model.Certificate
+	for _, ec := range ecerts {
+		c := &model.Certificate{
+			ID:                ec.ID,
+			Domains:           ec.Domains,
+			CommonName:        ec.CommonName,
+			CertURL:           ec.CertURL,
+			CertStableURL:     ec.CertStableURL,
+			PrivateKey:        ec.PrivateKey,
+			IssuerCertificate: ec.IssuerCertificate,
+			Issued:            ec.Issued,
+			Expiry:            ec.Expiry,
+			LastError:         ec.LastError,
+			ACMEEmail:         ec.ACMEEmail,
+			ACMERegistration:  ec.ACMERegistration,
+			ACMEKey:           decode(ec.ACMEKey),
+		}
+		certs = append(certs, c)
+	}
 	return certs, err
 }
 
 // Cert takes an id and returns their whole cert object.
 func (cr *certRepository) Cert(id string) (*model.Certificate, error) {
-	var c *model.Certificate
+	ec := &encodedCert{}
 	err := cr.DB.View(func(tx *bolt.Tx) error {
 		b := tx.Bucket(certBucket)
 		v := b.Get([]byte(id))
 		if v == nil {
 			return nil
 		}
-		c = &model.Certificate{}
-		err := json.Unmarshal(v, &c)
+
+		err := json.Unmarshal(v, &ec)
 		return err
 	})
+
+	c := &model.Certificate{
+		ID:                ec.ID,
+		Domains:           ec.Domains,
+		CommonName:        ec.CommonName,
+		CertURL:           ec.CertURL,
+		CertStableURL:     ec.CertStableURL,
+		PrivateKey:        ec.PrivateKey,
+		IssuerCertificate: ec.IssuerCertificate,
+		Issued:            ec.Issued,
+		Expiry:            ec.Expiry,
+		LastError:         ec.LastError,
+		ACMEEmail:         ec.ACMEEmail,
+		ACMERegistration:  ec.ACMERegistration,
+		ACMEKey:           decode(ec.ACMEKey),
+	}
 	return c, err
 }
 
 // SaveCert persists a Cert in BoltStore.
 func (cr *certRepository) SaveCert(c *model.Certificate) error {
+	ec := &encodedCert{
+		ID:                c.ID,
+		Domains:           c.Domains,
+		CommonName:        c.CommonName,
+		CertURL:           c.CertURL,
+		CertStableURL:     c.CertStableURL,
+		PrivateKey:        c.PrivateKey,
+		IssuerCertificate: c.IssuerCertificate,
+		Issued:            c.Issued,
+		Expiry:            c.Expiry,
+		LastError:         c.LastError,
+		ACMEEmail:         c.ACMEEmail,
+		ACMERegistration:  c.ACMERegistration,
+		ACMEKey:           encode(c.ACMEKey),
+	}
 	err := cr.DB.Update(func(tx *bolt.Tx) error {
 		b := tx.Bucket(certBucket)
-		buf, err := json.Marshal(c)
-		b.Put([]byte(c.ID), buf)
+		buf, err := json.Marshal(ec)
+		b.Put([]byte(ec.ID), buf)
 		return err
 	})
 	return err
@@ -110,4 +195,19 @@ func (cr *certRepository) DeleteAllCerts() error {
 		return nil
 	})
 	return err
+}
+
+func encode(privateKey *ecdsa.PrivateKey) string {
+	x509Encoded, _ := x509.MarshalECPrivateKey(privateKey)
+	pemEncoded := pem.EncodeToMemory(&pem.Block{Type: "PRIVATE KEY", Bytes: x509Encoded})
+
+	return string(pemEncoded)
+}
+
+func decode(pemEncoded string) *ecdsa.PrivateKey {
+	block, _ := pem.Decode([]byte(pemEncoded))
+	x509Encoded := block.Bytes
+	privateKey, _ := x509.ParseECPrivateKey(x509Encoded)
+
+	return privateKey
 }

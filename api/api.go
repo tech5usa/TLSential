@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 
+	"github.com/ImageWare/TLSential/acme"
 	"github.com/ImageWare/TLSential/auth"
 	"github.com/ImageWare/TLSential/certificate"
 	"github.com/ImageWare/TLSential/challenge_config"
@@ -41,7 +42,7 @@ type apiHandler struct {
 }
 
 // NewHandler creates a new apiHandler with given UserService and ConfigService.
-func NewHandler(version string, us user.Service, cs config.Service, chs challenge_config.Service, crs certificate.Service) Handler {
+func NewHandler(version string, us user.Service, cs config.Service, chs challenge_config.Service, crs certificate.Service, as acme.Service) Handler {
 	// TODO: Make RBAC persistent if needed.
 	rbac := auth.InitRBAC()
 	uh := NewUserHandler(us)
@@ -49,7 +50,7 @@ func NewHandler(version string, us user.Service, cs config.Service, chs challeng
 	ah := NewAuthHandler(cs, us)
 	ch := NewConfigHandler(cs)
 	chah := NewChallengeHandler(chs)
-	crh := NewCertificateHandler(crs)
+	crh := NewCertificateHandler(crs, as)
 	return &apiHandler{userHandler: uh, midHandler: mh, authHandler: ah, configHandler: ch, challengeHandler: chah, certificateHandler: crh, Version: version}
 }
 

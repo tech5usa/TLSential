@@ -1,7 +1,6 @@
 package boltdb
 
 import (
-	"crypto"
 	"fmt"
 
 	"github.com/ImageWare/TLSential/challenge_config"
@@ -84,57 +83,6 @@ func (r *challengeConfigRepository) SetAuthKey(authkey string) error {
 	err := r.DB.Update(func(tx *bolt.Tx) error {
 		b := tx.Bucket([]byte(challengeConfigBucket))
 		b.Put([]byte(authKeyKey), []byte(authkey))
-		return nil
-	})
-	return err
-}
-
-// AuthKey returns the currently stored auth key from boltdb.
-func (r *challengeConfigRepository) LEUserEmail() (string, error) {
-	var email string
-	err := r.DB.View(func(tx *bolt.Tx) error {
-		b := tx.Bucket([]byte(challengeConfigBucket))
-		v := b.Get([]byte(leUserEmailKey))
-		if v == nil {
-			return nil
-		}
-		email = string(v)
-		return nil
-	})
-	return email, err
-}
-
-// SetAuthKey stores the given key in boltdb.
-func (r *challengeConfigRepository) SetLEUserEmail(email string) error {
-	err := r.DB.Update(func(tx *bolt.Tx) error {
-		b := tx.Bucket([]byte(challengeConfigBucket))
-		b.Put([]byte(leUserEmailKey), []byte(email))
-		return nil
-	})
-	return err
-}
-
-// AuthKey returns the currently stored auth key from boltdb.
-func (r *challengeConfigRepository) LEUserKey() (crypto.PrivateKey, error) {
-	var key []byte
-	err := r.DB.View(func(tx *bolt.Tx) error {
-		b := tx.Bucket([]byte(challengeConfigBucket))
-		v := b.Get([]byte(leUserKeyKey))
-		if v == nil {
-			return nil
-		}
-		key = make([]byte, len(v))
-		copy(key, v)
-		return nil
-	})
-	return key, err
-}
-
-// SetAuthKey stores the given key in boltdb.
-func (r *challengeConfigRepository) SetLEUserKey(key crypto.PrivateKey) error {
-	err := r.DB.Update(func(tx *bolt.Tx) error {
-		b := tx.Bucket([]byte(challengeConfigBucket))
-		b.Put([]byte(leUserKeyKey), []byte(key))
 		return nil
 	})
 	return err

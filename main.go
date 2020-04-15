@@ -21,11 +21,13 @@ func main() {
 	fmt.Println("///- Starting up TLSential")
 	fmt.Printf("//- Version %s\n", Version)
 
+	var email string
 	var port int
 	var dbFile string
 	var secretReset bool
 
 	// Grab any command line arguments
+	flag.StringVar(&email, "email", "test@example.com", "Email address for Let's Encrypt account")
 	flag.IntVar(&port, "port", 80, "port for webserver to run on")
 	flag.StringVar(&dbFile, "database file", "tlsential.db", "filename for boltdb database")
 	flag.BoolVar(&secretReset, "secret-reset", false, "reset the JWT secret - invalidates all API sessions")
@@ -121,6 +123,7 @@ func newAPIHandler(db *bolt.DB) api.Handler {
 	cs := service.NewConfigService(crepo, us)
 	chs := service.NewChallengeConfigService(chrepo)
 	crs := service.NewCertificateService(certrepo)
+	as := service.NewAcmeService(crs, chs)
 
-	return api.NewHandler(Version, us, cs, chs, crs)
+	return api.NewHandler(Version, us, cs, chs, crs, as)
 }

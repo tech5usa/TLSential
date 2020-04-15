@@ -1,5 +1,5 @@
 TLSential
-*.test.db
+*.db
 
 # Binaries for programs and plugins
 *.exe
@@ -16,3 +16,6 @@ TLSential
 
 # Dependency directories (remove the comment below to include it)
 # vendor/
+
+# mac
+.DS_Store

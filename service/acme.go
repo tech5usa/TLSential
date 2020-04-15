@@ -76,7 +76,7 @@ func (s *acmeService) Trigger(id string) {
 	c.Certificate = signedCert.Certificate
 	c.IssuerCertificate = signedCert.IssuerCertificate
 	c.Issued = true
-	c.Expiry = GetExpiry(c)
+	c.Expiry = getExpiry(c)
 
 	log.Printf("/- Successfully minted certificate for %s - %s\n", c.ID, c.CommonName)
 	err = s.certService.SaveCert(c)
@@ -86,18 +86,11 @@ func (s *acmeService) Trigger(id string) {
 
 }
 
-func GetExpiry(c *model.Certificate) time.Time {
-	icert, err := certcrypto.ParsePEMCertificate(c.Certificate)
+func getExpiry(c *model.Certificate) time.Time {
+	x509Cert, err := certcrypto.ParsePEMCertificate(c.Certificate)
 	if err != nil {
 		log.Fatal(err)
 	}
-	log.Printf("%#v\n", icert)
 
-	notAfter := int(time.Until(icert.NotAfter).Hours() / 24.0)
-	timeLeft := icert.NotAfter.Sub(time.Now().UTC())
-	log.Printf("/ Certificate expires in %d days\n", notAfter)
-	log.Printf("/ NotAfter: %s\n", icert.NotAfter.Local().String())
-	log.Printf("/ Time Left %f\n", timeLeft.Hours())
-
-	return icert.NotAfter
+	return x509Cert.NotAfter
 }

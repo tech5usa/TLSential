@@ -6,6 +6,8 @@ import (
 	"net/http"
 
 	"github.com/ImageWare/TLSential/auth"
+	"github.com/ImageWare/TLSential/certificate"
+	"github.com/ImageWare/TLSential/challenge_config"
 	"github.com/ImageWare/TLSential/config"
 	"github.com/ImageWare/TLSential/user"
 	"github.com/gorilla/mux"
@@ -29,22 +31,26 @@ type Handler interface {
 }
 
 type apiHandler struct {
-	userHandler   UserHandler
-	midHandler    MiddlewareHandler
-	authHandler   AuthHandler
-	configHandler ConfigHandler
-	Version       string
+	userHandler        UserHandler
+	midHandler         MiddlewareHandler
+	authHandler        AuthHandler
+	configHandler      ConfigHandler
+	challengeHandler   ChallengeHandler
+	certificateHandler CertificateHandler
+	Version            string
 }
 
 // NewHandler creates a new apiHandler with given UserService and ConfigService.
-func NewHandler(version string, us user.Service, cs config.Service) Handler {
+func NewHandler(version string, us user.Service, cs config.Service, chs challenge_config.Service, crs certificate.Service) Handler {
 	// TODO: Make RBAC persistent if needed.
 	rbac := auth.InitRBAC()
 	uh := NewUserHandler(us)
 	mh := NewMiddlewareHandler(cs, rbac)
 	ah := NewAuthHandler(cs, us)
 	ch := NewConfigHandler(cs)
-	return &apiHandler{userHandler: uh, midHandler: mh, authHandler: ah, configHandler: ch, Version: version}
+	chah := NewChallengeHandler(chs)
+	crh := NewCertificateHandler(crs)
+	return &apiHandler{userHandler: uh, midHandler: mh, authHandler: ah, configHandler: ch, challengeHandler: chah, certificateHandler: crh, Version: version}
 }
 
 // Status returns the current version of the server.
@@ -64,6 +70,39 @@ func (h *apiHandler) router() *mux.Router {
 
 	r.HandleFunc("/api/config/superadmin/{id}", h.configHandler.SuperAdmin()).Methods("POST")
 
+	// api/certificate
+	r.HandleFunc("/api/certificate",
+		h.midHandler.Permission(
+			auth.PermCertAdmin,
+			h.certificateHandler.Get(),
+		)).Methods("GET")
+
+	r.HandleFunc("/api/certificate/{id}",
+		h.midHandler.Permission(
+			auth.PermCertAdmin,
+			h.certificateHandler.Get(),
+		)).Methods("GET")
+
+	r.HandleFunc("/api/certificate",
+		h.midHandler.Permission(
+			auth.PermCertAdmin,
+			h.certificateHandler.Post(),
+		)).Methods("POST")
+
+	// api/challenge
+	r.HandleFunc("/api/challenge",
+		h.midHandler.Permission(
+			auth.PermChallengeAdmin,
+			h.challengeHandler.Get(),
+		)).Methods("GET")
+
+	r.HandleFunc("/api/challenge",
+		h.midHandler.Permission(
+			auth.PermChallengeAdmin,
+			h.challengeHandler.Put(),
+		)).Methods("PUT")
+
+	// api/user
 	r.HandleFunc("/api/user/",
 		h.midHandler.Permission(
 			auth.PermUserRead,

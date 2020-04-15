@@ -1,6 +1,7 @@
 TLSential
 *.db
-*.test.db
+
+poc/poc
 
 # Binaries for programs and plugins
 *.exe

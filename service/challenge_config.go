@@ -57,12 +57,3 @@ func (s *challengeConfigService) SetAuth(email, key string) error {
 	err = s.repo.SetAuthKey(key)
 	return err
 }
-
-func (s *challengeConfigService) SaveLEUser(u *model.LEUser) error {
-	err := s.repo.SetLEUserEmail(u.Email)
-	if err != nil {
-		return err
-	}
-	err = s.repo.SetLEUserKey(u.Key)
-	return err
-}

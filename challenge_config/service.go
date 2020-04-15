@@ -10,6 +10,4 @@ type Service interface {
 	NewDNSProvider() (challenge.Provider, error)
 	Auth() (*model.ChallengeConfig, error)
 	SetAuth(email, key string) error
-	LEUser() *model.LEUser
-	SaveLEUser(*model.LEUser) error
 }

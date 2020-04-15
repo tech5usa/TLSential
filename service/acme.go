@@ -1,17 +1,16 @@
 package service
 
 import (
-	"crypto/ecdsa"
-	"crypto/elliptic"
-	"crypto/rand"
 	"log"
+	"time"
 
 	"github.com/ImageWare/TLSential/acme"
 	cert "github.com/ImageWare/TLSential/certificate"
 	"github.com/ImageWare/TLSential/challenge_config"
-	"github.com/go-acme/lego/certcrypto"
-	lcert "github.com/go-acme/lego/certificate"
-	"github.com/go-acme/lego/lego"
+	"github.com/ImageWare/TLSential/model"
+	"github.com/go-acme/lego/v3/certcrypto"
+	lcert "github.com/go-acme/lego/v3/certificate"
+	"github.com/go-acme/lego/v3/lego"
 )
 
 type acmeService struct {
@@ -25,22 +24,14 @@ func NewAcmeService(cts cert.Service, chs challenge_config.Service) acme.Service
 
 func (s *acmeService) Trigger(id string) {
 
-	leuser := s.challService.LEUser()
-	if leuser.Key == nil {
-		privateKey, err := ecdsa.GenerateKey(elliptic.P256(), rand.Reader)
-		if err != nil {
-			log.Fatal(err)
-		}
-		leuser.Key = privateKey
-		err = s.challService.SaveLEUser(leuser)
-		if err != nil {
-			log.Fatal(err)
-		}
-
+	c, err := s.certService.Cert(id)
+	if err != nil {
+		log.Printf("Error getting cert from ID - ID: %s, Err: %s\n", id, err.Error())
 	}
+
 	// Create a user. New accounts need an email and private key to start.
 
-	config := lego.NewConfig(leuser)
+	config := lego.NewConfig(c)
 
 	// This CA URL is configured for a local dev instance of Boulder running in Docker in a VM.
 	config.CADirURL = "https://acme-v02.api.letsencrypt.org/directory"
@@ -55,15 +46,12 @@ func (s *acmeService) Trigger(id string) {
 	provider, err := s.challService.NewDNSProvider()
 	if err != nil {
 		log.Printf("Error creating New DNS Provider - ID: %s, Err: %s\n", id, err.Error())
+		c.LastError = err
+		return
 	}
 	err = client.Challenge.SetDNS01Provider(provider)
 	if err != nil {
 		log.Fatal(err)
-	}
-
-	c, err := s.certService.Cert(id)
-	if err != nil {
-		log.Printf("Error getting cert from ID - ID: %s, Err: %s\n", id, err.Error())
 	}
 
 	request := lcert.ObtainRequest{
@@ -75,14 +63,41 @@ func (s *acmeService) Trigger(id string) {
 	if err != nil {
 		c.LastError = err
 		log.Printf("Error getting cert from ID - ID: %s, Err: %s\n", id, err.Error())
+		err = s.certService.SaveCert(c)
+		if err != nil {
+			log.Fatal(err.Error())
+		}
 		return
 	}
+
+	c.CertURL = signedCert.CertURL
+	c.CertStableURL = signedCert.CertStableURL
 	c.PrivateKey = signedCert.PrivateKey
+	c.Certificate = signedCert.Certificate
 	c.IssuerCertificate = signedCert.IssuerCertificate
 	c.Issued = true
+	c.Expiry = GetExpiry(c)
+
 	log.Printf("/- Successfully minted certificate for %s - %s\n", c.ID, c.CommonName)
 	err = s.certService.SaveCert(c)
 	if err != nil {
 		log.Fatal(err)
 	}
+
+}
+
+func GetExpiry(c *model.Certificate) time.Time {
+	icert, err := certcrypto.ParsePEMCertificate(c.Certificate)
+	if err != nil {
+		log.Fatal(err)
+	}
+	log.Printf("%#v\n", icert)
+
+	notAfter := int(time.Until(icert.NotAfter).Hours() / 24.0)
+	timeLeft := icert.NotAfter.Sub(time.Now().UTC())
+	log.Printf("/ Certificate expires in %d days\n", notAfter)
+	log.Printf("/ NotAfter: %s\n", icert.NotAfter.Local().String())
+	log.Printf("/ Time Left %f\n", timeLeft.Hours())
+
+	return icert.NotAfter
 }

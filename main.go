@@ -10,7 +10,6 @@ import (
 	"github.com/ImageWare/TLSential/api"
 	"github.com/ImageWare/TLSential/repository/boltdb"
 	"github.com/ImageWare/TLSential/service"
-	"github.com/go-acme/lego/registration"
 
 	"github.com/boltdb/bolt"
 )
@@ -33,13 +32,6 @@ func main() {
 	flag.StringVar(&dbFile, "database file", "tlsential.db", "filename for boltdb database")
 	flag.BoolVar(&secretReset, "secret-reset", false, "reset the JWT secret - invalidates all API sessions")
 	flag.Parse()
-
-	// New users will need to register
-	reg, err := client.Registration.Register(registration.RegisterOptions{TermsOfServiceAgreed: true})
-	if err != nil {
-		log.Fatal(err)
-	}
-	myUser.Registration = reg
 
 	// Open our database file.
 	db, err := bolt.Open(dbFile, 0666, nil)
@@ -131,6 +123,7 @@ func newAPIHandler(db *bolt.DB) api.Handler {
 	cs := service.NewConfigService(crepo, us)
 	chs := service.NewChallengeConfigService(chrepo)
 	crs := service.NewCertificateService(certrepo)
+	as := service.NewAcmeService(crs, chs)
 
-	return api.NewHandler(Version, us, cs, chs, crs)
+	return api.NewHandler(Version, us, cs, chs, crs, as)
 }

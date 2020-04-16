@@ -10,6 +10,7 @@ import (
 	"log"
 	"time"
 
+	"github.com/ImageWare/TLSential/auth"
 	"github.com/go-acme/lego/v3/certcrypto"
 	"github.com/go-acme/lego/v3/lego"
 	"github.com/go-acme/lego/v3/registration"
@@ -19,7 +20,8 @@ import (
 const CADirURL = "https://acme-v02.api.letsencrypt.org/directory"
 
 type Certificate struct {
-	ID string
+	ID     string
+	Secret string
 
 	// Domains is a list of domains valid for this domain.
 	Domains []string
@@ -58,6 +60,7 @@ var ErrEmailRequired = errors.New("email required")
 
 func NewCertificate(domains []string, email string) (*Certificate, error) {
 	id := ksuid.New().String()
+	secret := auth.NewPassword()
 
 	// TODO: Actually parse these to determine if valid domains
 	if len(domains) == 0 {
@@ -77,6 +80,7 @@ func NewCertificate(domains []string, email string) (*Certificate, error) {
 
 	c := &Certificate{
 		ID:         id,
+		Secret:     secret,
 		Domains:    domains,
 		CommonName: common,
 		ACMEEmail:  email,

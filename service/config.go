@@ -1,8 +1,6 @@
 package service
 
 import (
-	"crypto/rand"
-	"encoding/base64"
 	"errors"
 
 	"github.com/ImageWare/TLSential/auth"
@@ -10,9 +8,6 @@ import (
 	"github.com/ImageWare/TLSential/model"
 	"github.com/ImageWare/TLSential/user"
 )
-
-// randBytes is the number of bytes of entropy for SA password
-const randBytes = 16
 
 // ErrSuperAdminExists means a new SA cannot be created.
 var ErrSuperAdminExists = errors.New("super admin already exists")
@@ -58,10 +53,7 @@ func (s *configService) CreateSuperAdmin(name string) (*model.User, string, erro
 		return nil, "", ErrSuperAdminExists
 	}
 
-	p, err := newPassword()
-	if err != nil {
-		return nil, "", err
-	}
+	p := auth.NewPassword()
 
 	u, err := model.NewUser(name, p, auth.RoleSuperAdmin)
 	if err != nil {
@@ -82,17 +74,4 @@ func (s *configService) CreateSuperAdmin(name string) (*model.User, string, erro
 // which allows a new Super Admin to be initialized.
 func (s *configService) ResetSuperAdmin() error {
 	return s.repo.SetSuperAdmin("")
-}
-
-// newPassword generates cryptographically secure random bytes, base64
-// encodes it, and returns it.
-func newPassword() (string, error) {
-	c := randBytes
-	b := make([]byte, c)
-	_, err := rand.Read(b)
-	if err != nil {
-		return "", err
-	}
-	pass := base64.RawURLEncoding.EncodeToString(b)
-	return pass, nil
 }

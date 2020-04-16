@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"strings"
 
 	"github.com/ImageWare/TLSential/config"
 	"github.com/ImageWare/TLSential/user"
@@ -90,4 +91,25 @@ func (h *authHandler) Authenticate() http.HandlerFunc {
 		w.WriteHeader(http.StatusOK)
 		fmt.Fprintf(w, "%s", token)
 	}
+}
+
+func getSecret(r *http.Request) (secret string, ok bool) {
+	auth := r.Header.Get("Authorization")
+
+	if auth == "" {
+		return
+	}
+
+	return parseSecretAuth(auth)
+}
+
+func parseSecretAuth(auth string) (secret string, ok bool) {
+	const prefix = "Secret "
+
+	// Case insensitive prefix match.
+	if len(auth) < len(prefix) || !strings.EqualFold(auth[:len(prefix)], prefix) {
+		return
+	}
+
+	return auth[len(prefix):], true
 }

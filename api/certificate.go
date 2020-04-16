@@ -47,6 +47,7 @@ type CertReq struct {
 // CertResp is used for exporting User data via API responses
 type CertResp struct {
 	ID            string
+	Secret        string
 	CommonName    string
 	Domains       []string
 	CertURL       string
@@ -134,6 +135,7 @@ func (h *certHandler) Get() http.HandlerFunc {
 				}
 				cr := &CertResp{
 					ID:            c.ID,
+					Secret:        c.Secret,
 					CommonName:    c.CommonName,
 					Domains:       c.Domains,
 					CertURL:       c.CertURL,
@@ -178,6 +180,7 @@ func (h *certHandler) Get() http.HandlerFunc {
 		}
 		cr := &CertResp{
 			ID:            c.ID,
+			Secret:        c.Secret,
 			CommonName:    c.CommonName,
 			Domains:       c.Domains,
 			CertURL:       c.CertURL,
@@ -239,6 +242,7 @@ func (h *certHandler) Post() http.HandlerFunc {
 		// Keys and Certs
 		cresp := &CertResp{
 			ID:            c.ID,
+			Secret:        c.Secret,
 			CommonName:    c.CommonName,
 			Domains:       c.Domains,
 			CertURL:       c.CertURL,
@@ -294,6 +298,14 @@ func (h *certHandler) GetCert() http.HandlerFunc {
 			return
 		}
 
+		secret, ok := getSecret(r)
+		if !ok || secret != c.Secret {
+			// https://tools.ietf.org/html/rfc7235#section-3.1
+			w.Header().Set("WWW-Authenticate", "Secret")
+			http.Error(w, http.StatusText(http.StatusUnauthorized), http.StatusUnauthorized)
+			return
+		}
+
 		modtime := time.Now()
 		filename := fmt.Sprintf("%s%s", c.CommonName, CertFileExt)
 		cd := fmt.Sprintf("attachment; filename=%s", filename)
@@ -333,6 +345,14 @@ func (h *certHandler) GetIssuer() http.HandlerFunc {
 			return
 		}
 
+		secret, ok := getSecret(r)
+		if !ok || secret != c.Secret {
+			// https://tools.ietf.org/html/rfc7235#section-3.1
+			w.Header().Set("WWW-Authenticate", "Secret")
+			http.Error(w, http.StatusText(http.StatusUnauthorized), http.StatusUnauthorized)
+			return
+		}
+
 		modtime := time.Now()
 		filename := fmt.Sprintf("%s%s", c.CommonName, IssuerCertFileExt)
 		cd := fmt.Sprintf("attachment; filename=%s", filename)
@@ -369,6 +389,14 @@ func (h *certHandler) GetPrivkey() http.HandlerFunc {
 
 		if !c.Issued {
 			http.Error(w, "certificate not issued", http.StatusBadRequest)
+			return
+		}
+
+		secret, ok := getSecret(r)
+		if !ok || secret != c.Secret {
+			// https://tools.ietf.org/html/rfc7235#section-3.1
+			w.Header().Set("WWW-Authenticate", "Secret")
+			http.Error(w, http.StatusText(http.StatusUnauthorized), http.StatusUnauthorized)
 			return
 		}
 

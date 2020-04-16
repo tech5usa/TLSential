@@ -36,6 +36,7 @@ type encodedCert struct {
 	CertStableURL string
 
 	PrivateKey        []byte
+	Certificate       []byte
 	IssuerCertificate []byte
 
 	Issued bool
@@ -98,6 +99,7 @@ func (cr *certRepository) AllCerts() ([]*model.Certificate, error) {
 			CertURL:           ec.CertURL,
 			CertStableURL:     ec.CertStableURL,
 			PrivateKey:        ec.PrivateKey,
+			Certificate:       ec.Certificate,
 			IssuerCertificate: ec.IssuerCertificate,
 			Issued:            ec.Issued,
 			Expiry:            ec.Expiry,
@@ -132,6 +134,7 @@ func (cr *certRepository) Cert(id string) (*model.Certificate, error) {
 		CertURL:           ec.CertURL,
 		CertStableURL:     ec.CertStableURL,
 		PrivateKey:        ec.PrivateKey,
+		Certificate:       ec.Certificate,
 		IssuerCertificate: ec.IssuerCertificate,
 		Issued:            ec.Issued,
 		Expiry:            ec.Expiry,
@@ -152,6 +155,7 @@ func (cr *certRepository) SaveCert(c *model.Certificate) error {
 		CertURL:           c.CertURL,
 		CertStableURL:     c.CertStableURL,
 		PrivateKey:        c.PrivateKey,
+		Certificate:       c.Certificate,
 		IssuerCertificate: c.IssuerCertificate,
 		Issued:            c.Issued,
 		Expiry:            c.Expiry,

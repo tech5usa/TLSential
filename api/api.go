@@ -90,6 +90,24 @@ func (h *apiHandler) router() *mux.Router {
 			h.certificateHandler.Post(),
 		)).Methods("POST")
 
+	r.HandleFunc("/api/certificate/{id}/cert",
+		h.midHandler.Permission(
+			auth.PermCertAdmin,
+			h.certificateHandler.GetCert(),
+		)).Methods("GET")
+
+	r.HandleFunc("/api/certificate/{id}/privkey",
+		h.midHandler.Permission(
+			auth.PermCertAdmin,
+			h.certificateHandler.GetPrivkey(),
+		)).Methods("GET")
+
+	r.HandleFunc("/api/certificate/{id}/issuer",
+		h.midHandler.Permission(
+			auth.PermCertAdmin,
+			h.certificateHandler.GetIssuer(),
+		)).Methods("GET")
+
 	// api/challenge
 	r.HandleFunc("/api/challenge",
 		h.midHandler.Permission(

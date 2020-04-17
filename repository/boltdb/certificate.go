@@ -27,7 +27,8 @@ type certRepository struct {
 // Used as a middleman to encode in json for storage, purely for
 // ecdsa.PrivateKey storage.
 type encodedCert struct {
-	ID string
+	ID     string
+	Secret string
 
 	Domains    []string
 	CommonName string
@@ -36,6 +37,7 @@ type encodedCert struct {
 	CertStableURL string
 
 	PrivateKey        []byte
+	Certificate       []byte
 	IssuerCertificate []byte
 
 	Issued bool
@@ -93,11 +95,13 @@ func (cr *certRepository) AllCerts() ([]*model.Certificate, error) {
 	for _, ec := range ecerts {
 		c := &model.Certificate{
 			ID:                ec.ID,
+			Secret:            ec.Secret,
 			Domains:           ec.Domains,
 			CommonName:        ec.CommonName,
 			CertURL:           ec.CertURL,
 			CertStableURL:     ec.CertStableURL,
 			PrivateKey:        ec.PrivateKey,
+			Certificate:       ec.Certificate,
 			IssuerCertificate: ec.IssuerCertificate,
 			Issued:            ec.Issued,
 			Expiry:            ec.Expiry,
@@ -127,11 +131,13 @@ func (cr *certRepository) Cert(id string) (*model.Certificate, error) {
 
 	c := &model.Certificate{
 		ID:                ec.ID,
+		Secret:            ec.Secret,
 		Domains:           ec.Domains,
 		CommonName:        ec.CommonName,
 		CertURL:           ec.CertURL,
 		CertStableURL:     ec.CertStableURL,
 		PrivateKey:        ec.PrivateKey,
+		Certificate:       ec.Certificate,
 		IssuerCertificate: ec.IssuerCertificate,
 		Issued:            ec.Issued,
 		Expiry:            ec.Expiry,
@@ -147,11 +153,13 @@ func (cr *certRepository) Cert(id string) (*model.Certificate, error) {
 func (cr *certRepository) SaveCert(c *model.Certificate) error {
 	ec := &encodedCert{
 		ID:                c.ID,
+		Secret:            c.Secret,
 		Domains:           c.Domains,
 		CommonName:        c.CommonName,
 		CertURL:           c.CertURL,
 		CertStableURL:     c.CertStableURL,
 		PrivateKey:        c.PrivateKey,
+		Certificate:       c.Certificate,
 		IssuerCertificate: c.IssuerCertificate,
 		Issued:            c.Issued,
 		Expiry:            c.Expiry,

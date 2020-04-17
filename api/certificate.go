@@ -1,6 +1,7 @@
 package api
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"log"
@@ -14,10 +15,18 @@ import (
 	"github.com/gorilla/mux"
 )
 
+const CertFileExt = ".crt"
+const IssuerCertFileExt = ".issuer.crt"
+const KeyFileExt = ".key"
+const PemFileExt = ".pem"
+
 type CertificateHandler interface {
 	Get() http.HandlerFunc
 	Post() http.HandlerFunc
 	Delete() http.HandlerFunc
+	GetCert() http.HandlerFunc
+	GetPrivkey() http.HandlerFunc
+	GetIssuer() http.HandlerFunc
 }
 
 type certHandler struct {
@@ -38,6 +47,7 @@ type CertReq struct {
 // CertResp is used for exporting User data via API responses
 type CertResp struct {
 	ID            string
+	Secret        string
 	CommonName    string
 	Domains       []string
 	CertURL       string
@@ -125,6 +135,7 @@ func (h *certHandler) Get() http.HandlerFunc {
 				}
 				cr := &CertResp{
 					ID:            c.ID,
+					Secret:        c.Secret,
 					CommonName:    c.CommonName,
 					Domains:       c.Domains,
 					CertURL:       c.CertURL,
@@ -169,6 +180,7 @@ func (h *certHandler) Get() http.HandlerFunc {
 		}
 		cr := &CertResp{
 			ID:            c.ID,
+			Secret:        c.Secret,
 			CommonName:    c.CommonName,
 			Domains:       c.Domains,
 			CertURL:       c.CertURL,
@@ -230,6 +242,7 @@ func (h *certHandler) Post() http.HandlerFunc {
 		// Keys and Certs
 		cresp := &CertResp{
 			ID:            c.ID,
+			Secret:        c.Secret,
 			CommonName:    c.CommonName,
 			Domains:       c.Domains,
 			CertURL:       c.CertURL,
@@ -251,3 +264,149 @@ func (h *certHandler) Post() http.HandlerFunc {
 		fmt.Fprintf(w, "%s", out)
 	}
 }
+
+// TODO: Refactor GetCert, GetIssuer, and GetPrivkey as they do almost the exact
+// same things.
+
+// /api/certificate/{id}/cert
+func (h *certHandler) GetCert() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		vars := mux.Vars(r)
+		id := vars["id"]
+
+		if id == "" {
+			log.Printf("api CertHandler GetCert, should never have routed here")
+			http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+			return
+		}
+
+		// Return cert if found
+		c, err := h.cs.Cert(id)
+		if err != nil {
+			log.Printf("apiCertHandler GET, GetCert(), %s", err.Error())
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		if c == nil {
+			http.Error(w, http.StatusText(http.StatusNotFound), http.StatusNotFound)
+			return
+		}
+
+		if !c.Issued {
+			http.Error(w, "certificate not issued", http.StatusBadRequest)
+			return
+		}
+
+		secret, ok := getSecret(r)
+		if !ok || secret != c.Secret {
+			// https://tools.ietf.org/html/rfc7235#section-3.1
+			w.Header().Set("WWW-Authenticate", "Secret")
+			http.Error(w, http.StatusText(http.StatusUnauthorized), http.StatusUnauthorized)
+			return
+		}
+
+		modtime := time.Now()
+		filename := fmt.Sprintf("%s%s", c.CommonName, CertFileExt)
+		cd := fmt.Sprintf("attachment; filename=%s", filename)
+
+		w.Header().Add("Content-Disposition", cd)
+		http.ServeContent(w, r, filename, modtime, bytes.NewReader(c.Certificate))
+	}
+}
+
+// /api/certificate/{id}/issuer
+func (h *certHandler) GetIssuer() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		vars := mux.Vars(r)
+		id := vars["id"]
+
+		if id == "" {
+			log.Printf("api CertHandler GetIssuer, should never have routed here")
+			http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+			return
+		}
+
+		// Return cert if found
+		c, err := h.cs.Cert(id)
+		if err != nil {
+			log.Printf("apiCertHandler GET, GetCert(), %s", err.Error())
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		if c == nil {
+			http.Error(w, http.StatusText(http.StatusNotFound), http.StatusNotFound)
+			return
+		}
+
+		if !c.Issued {
+			http.Error(w, "certificate not issued", http.StatusBadRequest)
+			return
+		}
+
+		secret, ok := getSecret(r)
+		if !ok || secret != c.Secret {
+			// https://tools.ietf.org/html/rfc7235#section-3.1
+			w.Header().Set("WWW-Authenticate", "Secret")
+			http.Error(w, http.StatusText(http.StatusUnauthorized), http.StatusUnauthorized)
+			return
+		}
+
+		modtime := time.Now()
+		filename := fmt.Sprintf("%s%s", c.CommonName, IssuerCertFileExt)
+		cd := fmt.Sprintf("attachment; filename=%s", filename)
+
+		w.Header().Add("Content-Disposition", cd)
+		http.ServeContent(w, r, filename, modtime, bytes.NewReader(c.IssuerCertificate))
+	}
+}
+
+// /api/certificate/{id}/privkey
+func (h *certHandler) GetPrivkey() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		vars := mux.Vars(r)
+		id := vars["id"]
+
+		if id == "" {
+			log.Printf("api CertHandler GetPrivkey, should never have routed here")
+			http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+			return
+		}
+
+		// Return cert if found
+		c, err := h.cs.Cert(id)
+		if err != nil {
+			log.Printf("apiCertHandler GET, GetCert(), %s", err.Error())
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		if c == nil {
+			http.Error(w, http.StatusText(http.StatusNotFound), http.StatusNotFound)
+			return
+		}
+
+		if !c.Issued {
+			http.Error(w, "certificate not issued", http.StatusBadRequest)
+			return
+		}
+
+		secret, ok := getSecret(r)
+		if !ok || secret != c.Secret {
+			// https://tools.ietf.org/html/rfc7235#section-3.1
+			w.Header().Set("WWW-Authenticate", "Secret")
+			http.Error(w, http.StatusText(http.StatusUnauthorized), http.StatusUnauthorized)
+			return
+		}
+
+		modtime := time.Now()
+		filename := fmt.Sprintf("%s%s", c.CommonName, KeyFileExt)
+		cd := fmt.Sprintf("attachment; filename=%s", filename)
+
+		w.Header().Add("Content-Disposition", cd)
+		http.ServeContent(w, r, filename, modtime, bytes.NewReader(c.PrivateKey))
+	}
+}
+
+// TODO: Add a PEM version of privkey and fullchain.

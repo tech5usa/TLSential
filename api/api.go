@@ -102,6 +102,10 @@ func (h *apiHandler) router() *mux.Router {
 		h.certificateHandler.GetIssuer(),
 	).Methods("GET")
 
+	r.HandleFunc("/api/certificate/{id}/renew",
+		h.certificateHandler.Renew(),
+	).Methods("POST")
+
 	// api/challenge
 	r.HandleFunc("/api/challenge",
 		h.midHandler.Permission(

@@ -27,6 +27,7 @@ type CertificateHandler interface {
 	GetCert() http.HandlerFunc
 	GetPrivkey() http.HandlerFunc
 	GetIssuer() http.HandlerFunc
+	Renew() http.HandlerFunc
 }
 
 type certHandler struct {
@@ -409,4 +410,45 @@ func (h *certHandler) GetPrivkey() http.HandlerFunc {
 	}
 }
 
-// TODO: Add a PEM version of privkey and fullchain.
+func (h *certHandler) Renew() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		vars := mux.Vars(r)
+		id := vars["id"]
+
+		if id == "" {
+			log.Printf("api CertHandler Renew(), should never have routed here")
+			http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+			return
+		}
+
+		// Return cert if found
+		c, err := h.cs.Cert(id)
+		if err != nil {
+			log.Printf("api CertHandler Renew(), GetCert(), %s", err.Error())
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		if c == nil {
+			http.Error(w, http.StatusText(http.StatusNotFound), http.StatusNotFound)
+			return
+		}
+
+		if !c.Issued {
+			http.Error(w, "certificate not issued", http.StatusBadRequest)
+			return
+		}
+
+		secret, ok := getSecret(r)
+		if !ok || secret != c.Secret {
+			// https://tools.ietf.org/html/rfc7235#section-3.1
+			w.Header().Set("WWW-Authenticate", "Secret")
+			http.Error(w, http.StatusText(http.StatusUnauthorized), http.StatusUnauthorized)
+			return
+		}
+
+		h.acme.Renew(c)
+
+		w.WriteHeader(http.StatusAccepted)
+	}
+}

@@ -5,6 +5,7 @@ import (
 	"crypto/x509"
 	"encoding/json"
 	"encoding/pem"
+	"errors"
 	"fmt"
 	"time"
 
@@ -44,7 +45,7 @@ type encodedCert struct {
 
 	Expiry time.Time
 
-	LastError error
+	LastError string
 
 	ACMEEmail        string
 	ACMERegistration *registration.Resource
@@ -93,6 +94,10 @@ func (cr *certRepository) AllCerts() ([]*model.Certificate, error) {
 
 	var certs []*model.Certificate
 	for _, ec := range ecerts {
+		var lastError error
+		if ec.LastError != "" {
+			lastError = errors.New(ec.LastError)
+		}
 		c := &model.Certificate{
 			ID:                ec.ID,
 			Secret:            ec.Secret,
@@ -105,7 +110,7 @@ func (cr *certRepository) AllCerts() ([]*model.Certificate, error) {
 			IssuerCertificate: ec.IssuerCertificate,
 			Issued:            ec.Issued,
 			Expiry:            ec.Expiry,
-			LastError:         ec.LastError,
+			LastError:         lastError,
 			ACMEEmail:         ec.ACMEEmail,
 			ACMERegistration:  ec.ACMERegistration,
 			ACMEKey:           decode(ec.ACMEKey),
@@ -129,6 +134,10 @@ func (cr *certRepository) Cert(id string) (*model.Certificate, error) {
 		return err
 	})
 
+	var lastError error
+	if ec.LastError != "" {
+		lastError = errors.New(ec.LastError)
+	}
 	c := &model.Certificate{
 		ID:                ec.ID,
 		Secret:            ec.Secret,
@@ -141,7 +150,7 @@ func (cr *certRepository) Cert(id string) (*model.Certificate, error) {
 		IssuerCertificate: ec.IssuerCertificate,
 		Issued:            ec.Issued,
 		Expiry:            ec.Expiry,
-		LastError:         ec.LastError,
+		LastError:         lastError,
 		ACMEEmail:         ec.ACMEEmail,
 		ACMERegistration:  ec.ACMERegistration,
 		ACMEKey:           decode(ec.ACMEKey),
@@ -151,6 +160,10 @@ func (cr *certRepository) Cert(id string) (*model.Certificate, error) {
 
 // SaveCert persists a Cert in BoltStore.
 func (cr *certRepository) SaveCert(c *model.Certificate) error {
+	var lastError string
+	if c.LastError != nil {
+		lastError = c.LastError.Error()
+	}
 	ec := &encodedCert{
 		ID:                c.ID,
 		Secret:            c.Secret,
@@ -163,7 +176,7 @@ func (cr *certRepository) SaveCert(c *model.Certificate) error {
 		IssuerCertificate: c.IssuerCertificate,
 		Issued:            c.Issued,
 		Expiry:            c.Expiry,
-		LastError:         c.LastError,
+		LastError:         lastError,
 		ACMEEmail:         c.ACMEEmail,
 		ACMERegistration:  c.ACMERegistration,
 		ACMEKey:           encode(c.ACMEKey),

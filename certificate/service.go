@@ -22,3 +22,6 @@ type Service interface {
 	DeleteCert(id string) error
 	DeleteAllCerts() error
 }
+
+// TODO: Add function to reset/refresh Certificate secret in case of
+// breach/leak.

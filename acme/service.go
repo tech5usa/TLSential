@@ -2,7 +2,8 @@ package acme
 
 import "github.com/ImageWare/TLSential/model"
 
-// Trigger an ACME request for the id
+// Service implements the ability to trigger a new certificate request, or Renew
+// a certificate. Renewal presumes a certificate has already been issued.
 type Service interface {
 	Trigger(id string)
 	Renew(c *model.Certificate)

@@ -447,7 +447,7 @@ func (h *certHandler) Renew() http.HandlerFunc {
 			return
 		}
 
-		h.acme.Renew(c)
+		go h.acme.Renew(c)
 
 		w.WriteHeader(http.StatusAccepted)
 	}

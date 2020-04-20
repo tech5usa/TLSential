@@ -5,7 +5,6 @@ import (
 	"crypto/ecdsa"
 	"crypto/elliptic"
 	"crypto/rand"
-	"crypto/x509"
 	"errors"
 	"log"
 	"time"
@@ -105,15 +104,6 @@ func NewCertificate(domains []string, email string) (*Certificate, error) {
 	c.ACMERegistration = reg
 
 	return c, nil
-}
-
-func (c *Certificate) setExpiry() error {
-	cert, err := x509.ParseCertificate(c.IssuerCertificate)
-	if err != nil {
-		return err
-	}
-	c.Expiry = cert.NotAfter
-	return nil
 }
 
 func (c *Certificate) GetEmail() string {

@@ -30,7 +30,7 @@ var (
 // Handler provides an interface for all api/calls.
 type Handler interface {
 	Status() http.HandlerFunc
-	NewMux() *http.ServeMux
+	Route() *mux.Router
 }
 
 type apiHandler struct {
@@ -64,7 +64,7 @@ func (h *apiHandler) Status() http.HandlerFunc {
 }
 
 // TODO: Break this up into sub routers within the handlers.
-func (h *apiHandler) router() *mux.Router {
+func (h *apiHandler) Route() *mux.Router {
 	r := mux.NewRouter()
 
 	r.HandleFunc("/api/status", h.Status())
@@ -159,13 +159,4 @@ func (h *apiHandler) router() *mux.Router {
 		)).Methods("DELETE")
 
 	return r
-}
-
-// NewMux returns a new http.ServeMux with established routes.
-func (h *apiHandler) NewMux() *http.ServeMux {
-	r := h.router()
-
-	s := http.NewServeMux()
-	s.Handle("/", r)
-	return s
 }

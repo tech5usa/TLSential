@@ -54,12 +54,9 @@ func main() {
 	as := newACMEService(db)
 	go autoRenewal(cs, as)
 
-	apiHandler := newAPIHandler(db)
-
 	// Run http server concurrently
 	// Load routes for the server
-	// TODO: Refactor api to be under an http/ module to allow for non-api type calls.
-	mux := apiHandler.NewMux()
+	mux := NewMux(db)
 
 	s := http.Server{
 		Addr:    fmt.Sprintf(":%d", port),
@@ -67,6 +64,17 @@ func main() {
 	}
 
 	log.Fatal(s.ListenAndServe())
+}
+
+// NewMux returns a new http.ServeMux with established routes.
+func NewMux(db *bolt.DB) *http.ServeMux {
+	apiHandler := newAPIHandler(db)
+
+	r := apiHandler.Route()
+
+	s := http.NewServeMux()
+	s.Handle("/api/", r)
+	return s
 }
 
 func initSecret(db *bolt.DB) {

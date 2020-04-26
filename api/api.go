@@ -14,6 +14,8 @@ import (
 	"github.com/gorilla/mux"
 )
 
+// TODO: Syslog formatted log/audit files.
+
 var (
 	// ErrMissingID is returned when you made a call that isn't supported
 	// without an ID in the URI
@@ -65,7 +67,7 @@ func (h *apiHandler) Status() http.HandlerFunc {
 func (h *apiHandler) router() *mux.Router {
 	r := mux.NewRouter()
 
-	r.HandleFunc("/status", h.Status())
+	r.HandleFunc("/api/status", h.Status())
 
 	r.HandleFunc("/api/authenticate", h.authHandler.Authenticate()).Methods("POST")
 

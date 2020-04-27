@@ -253,16 +253,16 @@ func (h *certHandler) Post() http.HandlerFunc {
 			LastError:     "",
 			ACMEEmail:     c.ACMEEmail,
 		}
-		out, err := json.Marshal(cresp)
+
+		w.WriteHeader(http.StatusCreated)
+		w.Header().Set("Content-Type", "application/json")
+
+		err = json.NewEncoder(w).Encode(cresp)
 		if err != nil {
 			log.Printf("apiCertHandler POST, json.Marshal(), %s", err.Error())
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
-
-		w.WriteHeader(http.StatusCreated)
-		w.Header().Set("Content-Type", "application/json")
-		fmt.Fprintf(w, "%s", out)
 	}
 }
 

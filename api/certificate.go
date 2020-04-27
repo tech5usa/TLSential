@@ -299,14 +299,6 @@ func (h *certHandler) GetCert() http.HandlerFunc {
 			return
 		}
 
-		secret, ok := getSecret(r)
-		if !ok || secret != c.Secret {
-			// https://tools.ietf.org/html/rfc7235#section-3.1
-			w.Header().Set("WWW-Authenticate", "Secret")
-			http.Error(w, http.StatusText(http.StatusUnauthorized), http.StatusUnauthorized)
-			return
-		}
-
 		modtime := time.Now()
 		filename := fmt.Sprintf("%s%s", c.CommonName, CertFileExt)
 		cd := fmt.Sprintf("attachment; filename=%s", filename)
@@ -343,14 +335,6 @@ func (h *certHandler) GetIssuer() http.HandlerFunc {
 
 		if !c.Issued {
 			http.Error(w, "certificate not issued", http.StatusBadRequest)
-			return
-		}
-
-		secret, ok := getSecret(r)
-		if !ok || secret != c.Secret {
-			// https://tools.ietf.org/html/rfc7235#section-3.1
-			w.Header().Set("WWW-Authenticate", "Secret")
-			http.Error(w, http.StatusText(http.StatusUnauthorized), http.StatusUnauthorized)
 			return
 		}
 

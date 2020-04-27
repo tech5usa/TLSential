@@ -253,16 +253,16 @@ func (h *certHandler) Post() http.HandlerFunc {
 			LastError:     "",
 			ACMEEmail:     c.ACMEEmail,
 		}
-		out, err := json.Marshal(cresp)
+
+		w.WriteHeader(http.StatusCreated)
+		w.Header().Set("Content-Type", "application/json")
+
+		err = json.NewEncoder(w).Encode(cresp)
 		if err != nil {
 			log.Printf("apiCertHandler POST, json.Marshal(), %s", err.Error())
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
-
-		w.WriteHeader(http.StatusCreated)
-		w.Header().Set("Content-Type", "application/json")
-		fmt.Fprintf(w, "%s", out)
 	}
 }
 
@@ -296,14 +296,6 @@ func (h *certHandler) GetCert() http.HandlerFunc {
 
 		if !c.Issued {
 			http.Error(w, "certificate not issued", http.StatusBadRequest)
-			return
-		}
-
-		secret, ok := getSecret(r)
-		if !ok || secret != c.Secret {
-			// https://tools.ietf.org/html/rfc7235#section-3.1
-			w.Header().Set("WWW-Authenticate", "Secret")
-			http.Error(w, http.StatusText(http.StatusUnauthorized), http.StatusUnauthorized)
 			return
 		}
 
@@ -343,14 +335,6 @@ func (h *certHandler) GetIssuer() http.HandlerFunc {
 
 		if !c.Issued {
 			http.Error(w, "certificate not issued", http.StatusBadRequest)
-			return
-		}
-
-		secret, ok := getSecret(r)
-		if !ok || secret != c.Secret {
-			// https://tools.ietf.org/html/rfc7235#section-3.1
-			w.Header().Set("WWW-Authenticate", "Secret")
-			http.Error(w, http.StatusText(http.StatusUnauthorized), http.StatusUnauthorized)
 			return
 		}
 

@@ -9,7 +9,6 @@ import (
 )
 
 // How often to scan all certificates to determine if they'll need renewal.
-//var scanPeriod = time.Hour
 var scanPeriod = time.Hour
 
 func autoRenewal(cs certificate.Service, as acme.Service) {

@@ -7,7 +7,9 @@ import (
 	"log"
 	"net/http"
 
+	"github.com/ImageWare/TLSential/acme"
 	"github.com/ImageWare/TLSential/api"
+	"github.com/ImageWare/TLSential/certificate"
 	"github.com/ImageWare/TLSential/repository/boltdb"
 	"github.com/ImageWare/TLSential/service"
 
@@ -47,12 +49,14 @@ func main() {
 
 	initSecret(db)
 
-	ah := newAPIHandler(db)
+	// Start a goroutine to automatically renew certificates in the DB.
+	cs := newCertService(db)
+	as := newACMEService(db)
+	go autoRenewal(cs, as)
 
 	// Run http server concurrently
 	// Load routes for the server
-	// TODO: Refactor api to be under an http/ module to allow for non-api type calls.
-	mux := ah.NewMux()
+	mux := NewMux(db)
 
 	s := http.Server{
 		Addr:    fmt.Sprintf(":%d", port),
@@ -60,7 +64,17 @@ func main() {
 	}
 
 	log.Fatal(s.ListenAndServe())
+}
 
+// NewMux returns a new http.ServeMux with established routes.
+func NewMux(db *bolt.DB) *http.ServeMux {
+	apiHandler := newAPIHandler(db)
+
+	r := apiHandler.Route()
+
+	s := http.NewServeMux()
+	s.Handle("/api/", r)
+	return s
 }
 
 func initSecret(db *bolt.DB) {
@@ -126,4 +140,35 @@ func newAPIHandler(db *bolt.DB) api.Handler {
 	as := service.NewAcmeService(crs, chs)
 
 	return api.NewHandler(Version, us, cs, chs, crs, as)
+}
+
+// helper for creating an ACME Service from a db.
+func newACMEService(db *bolt.DB) acme.Service {
+	chrepo, err := boltdb.NewChallengeConfigRepository(db)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	certrepo, err := boltdb.NewCertificateRepository(db)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	chs := service.NewChallengeConfigService(chrepo)
+	crs := service.NewCertificateService(certrepo)
+	as := service.NewAcmeService(crs, chs)
+
+	return as
+}
+
+// helper for creating an Certificate Service from a db.
+func newCertService(db *bolt.DB) certificate.Service {
+	certrepo, err := boltdb.NewCertificateRepository(db)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	crs := service.NewCertificateService(certrepo)
+
+	return crs
 }

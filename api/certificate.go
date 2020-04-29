@@ -54,6 +54,7 @@ type CertResp struct {
 	CertURL       string
 	CertStableURL string
 	Expiry        time.Time
+	RenewAt       int
 	Issued        bool
 	LastError     string
 	ACMEEmail     string
@@ -142,6 +143,7 @@ func (h *certHandler) Get() http.HandlerFunc {
 					CertURL:       c.CertURL,
 					CertStableURL: c.CertStableURL,
 					Expiry:        c.Expiry,
+					RenewAt:       c.RenewAt,
 					Issued:        c.Issued,
 					LastError:     lastError,
 					ACMEEmail:     c.ACMEEmail,
@@ -187,6 +189,7 @@ func (h *certHandler) Get() http.HandlerFunc {
 			CertURL:       c.CertURL,
 			CertStableURL: c.CertStableURL,
 			Expiry:        c.Expiry,
+			RenewAt:       c.RenewAt,
 			Issued:        c.Issued,
 			LastError:     lastError,
 			ACMEEmail:     c.ACMEEmail,
@@ -249,6 +252,7 @@ func (h *certHandler) Post() http.HandlerFunc {
 			CertURL:       c.CertURL,
 			CertStableURL: c.CertStableURL,
 			Expiry:        c.Expiry,
+			RenewAt:       c.RenewAt,
 			Issued:        c.Issued,
 			LastError:     "",
 			ACMEEmail:     c.ACMEEmail,

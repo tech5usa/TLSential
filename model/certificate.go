@@ -19,6 +19,13 @@ import (
 
 const CADirURL = "https://acme-v02.api.letsencrypt.org/directory"
 
+// DefaultRenewAt is the number of days before expiration a cert should be
+// renewed at.
+const DefaultRenewAt = 30
+
+var ErrInvalidDomains = errors.New("invalid domains")
+var ErrEmailRequired = errors.New("email required")
+
 type Certificate struct {
 	ID     string
 	Secret string
@@ -43,6 +50,10 @@ type Certificate struct {
 	// NotAfter
 	Expiry time.Time
 
+	// RewnewAt specifies the number of days before expiration a cert should be
+	// renewed by.
+	RenewAt int
+
 	// TODO: Add renewal time.Duration
 
 	// TODO: Add DNS Configuration foreign key when we allow for more than one
@@ -55,11 +66,9 @@ type Certificate struct {
 	ACMEKey          *ecdsa.PrivateKey
 }
 
-var ErrInvalidDomains = errors.New("invalid domains")
-var ErrInvalidEmail = errors.New("invalid email")
-
-// NewCertificate parses domains and email into a valid certificate object. Also
-// handles the creation of the lego Client details to get ready for issuance.
+// NewCertificate sets up everything needed for Lego to move forward with cert
+// issuance and renewal, as well as generating a unique ID, and a
+// cryptographically secure secret.
 func NewCertificate(domains []string, email string) (*Certificate, error) {
 	id := ksuid.New().String()
 	secret := auth.NewPassword()
@@ -85,7 +94,8 @@ func NewCertificate(domains []string, email string) (*Certificate, error) {
 		Secret:     secret,
 		Domains:    domains,
 		CommonName: common,
-		ACMEEmail:  e.Address,
+		RenewAt:    DefaultRenewAt,
+    ACMEEmail:  e.Address,
 		ACMEKey:    privateKey,
 	}
 
@@ -94,10 +104,9 @@ func NewCertificate(domains []string, email string) (*Certificate, error) {
 	config.CADirURL = CADirURL
 	config.Certificate.KeyType = certcrypto.RSA2048
 
-	// TODO: Determine whether or not to return err or panic.
 	client, err := lego.NewClient(config)
 	if err != nil {
-		log.Fatal(err)
+		return nil, err
 	}
 
 	reg, err := client.Registration.Register(registration.RegisterOptions{TermsOfServiceAgreed: true})
@@ -109,12 +118,17 @@ func NewCertificate(domains []string, email string) (*Certificate, error) {
 	return c, nil
 }
 
+// GetEmail is needed to implement the User interface for Lego Clients.
 func (c *Certificate) GetEmail() string {
 	return c.ACMEEmail
 }
+
+// GetRegistration is needed to implement the User interface for Lego Clients.
 func (c *Certificate) GetRegistration() *registration.Resource {
 	return c.ACMERegistration
 }
+
+// GetPrivateKey is needed to implement the User interface for Lego Clients.
 func (c *Certificate) GetPrivateKey() crypto.PrivateKey {
 	return c.ACMEKey
 }

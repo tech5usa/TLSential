@@ -43,7 +43,8 @@ type encodedCert struct {
 
 	Issued bool
 
-	Expiry time.Time
+	Expiry  time.Time
+	RenewAt int
 
 	LastError string
 
@@ -110,6 +111,7 @@ func (cr *certRepository) AllCerts() ([]*model.Certificate, error) {
 			IssuerCertificate: ec.IssuerCertificate,
 			Issued:            ec.Issued,
 			Expiry:            ec.Expiry,
+			RenewAt:           ec.RenewAt,
 			LastError:         lastError,
 			ACMEEmail:         ec.ACMEEmail,
 			ACMERegistration:  ec.ACMERegistration,
@@ -150,6 +152,7 @@ func (cr *certRepository) Cert(id string) (*model.Certificate, error) {
 		IssuerCertificate: ec.IssuerCertificate,
 		Issued:            ec.Issued,
 		Expiry:            ec.Expiry,
+		RenewAt:           ec.RenewAt,
 		LastError:         lastError,
 		ACMEEmail:         ec.ACMEEmail,
 		ACMERegistration:  ec.ACMERegistration,
@@ -176,6 +179,7 @@ func (cr *certRepository) SaveCert(c *model.Certificate) error {
 		IssuerCertificate: c.IssuerCertificate,
 		Issued:            c.Issued,
 		Expiry:            c.Expiry,
+		RenewAt:           c.RenewAt,
 		LastError:         lastError,
 		ACMEEmail:         c.ACMEEmail,
 		ACMERegistration:  c.ACMERegistration,

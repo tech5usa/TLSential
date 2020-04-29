@@ -65,6 +65,9 @@ type Certificate struct {
 	ACMEKey          *ecdsa.PrivateKey
 }
 
+// NewCertificate sets up everything needed for Lego to move forward with cert
+// issuance and renewal, as well as generating a unique ID, and a
+// cryptographically secure secret.
 func NewCertificate(domains []string, email string) (*Certificate, error) {
 	id := ksuid.New().String()
 	secret := auth.NewPassword()
@@ -100,10 +103,9 @@ func NewCertificate(domains []string, email string) (*Certificate, error) {
 	config.CADirURL = CADirURL
 	config.Certificate.KeyType = certcrypto.RSA2048
 
-	// TODO: Determine whether or not to return err or panic.
 	client, err := lego.NewClient(config)
 	if err != nil {
-		log.Fatal(err)
+		return nil, err
 	}
 
 	reg, err := client.Registration.Register(registration.RegisterOptions{TermsOfServiceAgreed: true})
@@ -115,12 +117,17 @@ func NewCertificate(domains []string, email string) (*Certificate, error) {
 	return c, nil
 }
 
+// GetEmail is needed to implement the User interface for Lego Clients.
 func (c *Certificate) GetEmail() string {
 	return c.ACMEEmail
 }
+
+// GetRegistration is needed to implement the User interface for Lego Clients.
 func (c *Certificate) GetRegistration() *registration.Resource {
 	return c.ACMERegistration
 }
+
+// GetPrivateKey is needed to implement the User interface for Lego Clients.
 func (c *Certificate) GetPrivateKey() crypto.PrivateKey {
 	return c.ACMEKey
 }

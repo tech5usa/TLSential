@@ -18,6 +18,13 @@ import (
 
 const CADirURL = "https://acme-v02.api.letsencrypt.org/directory"
 
+// DefaultRenewAt is the number of days before expiration a cert should be
+// renewed at.
+const DefaultRenewAt = 30
+
+var ErrInvalidDomains = errors.New("invalid domains")
+var ErrEmailRequired = errors.New("email required")
+
 type Certificate struct {
 	ID     string
 	Secret string
@@ -42,6 +49,10 @@ type Certificate struct {
 	// NotAfter
 	Expiry time.Time
 
+	// RewnewAt specifies the number of days before expiration a cert should be
+	// renewed by.
+	RenewAt int
+
 	// TODO: Add renewal time.Duration
 
 	// TODO: Add DNS Configuration foreign key when we allow for more than one
@@ -53,9 +64,6 @@ type Certificate struct {
 	ACMERegistration *registration.Resource
 	ACMEKey          *ecdsa.PrivateKey
 }
-
-var ErrInvalidDomains = errors.New("invalid domains")
-var ErrEmailRequired = errors.New("email required")
 
 func NewCertificate(domains []string, email string) (*Certificate, error) {
 	id := ksuid.New().String()
@@ -82,6 +90,7 @@ func NewCertificate(domains []string, email string) (*Certificate, error) {
 		Secret:     secret,
 		Domains:    domains,
 		CommonName: common,
+		RenewAt:    DefaultRenewAt,
 		ACMEEmail:  email,
 		ACMEKey:    privateKey,
 	}

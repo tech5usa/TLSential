@@ -24,7 +24,7 @@ const CADirURL = "https://acme-v02.api.letsencrypt.org/directory"
 const DefaultRenewAt = 30
 
 var ErrInvalidDomains = errors.New("invalid domains")
-var ErrEmailRequired = errors.New("email required")
+var ErrInvalidEmail = errors.New("email required")
 
 type Certificate struct {
 	ID     string
@@ -95,7 +95,7 @@ func NewCertificate(domains []string, email string) (*Certificate, error) {
 		Domains:    domains,
 		CommonName: common,
 		RenewAt:    DefaultRenewAt,
-    ACMEEmail:  e.Address,
+		ACMEEmail:  e.Address,
 		ACMEKey:    privateKey,
 	}
 

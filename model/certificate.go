@@ -7,6 +7,7 @@ import (
 	"crypto/rand"
 	"errors"
 	"log"
+	"net/mail"
 	"time"
 
 	"github.com/ImageWare/TLSential/auth"
@@ -55,8 +56,10 @@ type Certificate struct {
 }
 
 var ErrInvalidDomains = errors.New("invalid domains")
-var ErrEmailRequired = errors.New("email required")
+var ErrInvalidEmail = errors.New("invalid email")
 
+// NewCertificate parses domains and email into a valid certificate object. Also
+// handles the creation of the lego Client details to get ready for issuance.
 func NewCertificate(domains []string, email string) (*Certificate, error) {
 	id := ksuid.New().String()
 	secret := auth.NewPassword()
@@ -67,9 +70,9 @@ func NewCertificate(domains []string, email string) (*Certificate, error) {
 	}
 	common := domains[0]
 
-	// TODO: Parse and determine if valid email address
-	if email == "" {
-		return nil, ErrEmailRequired
+	e, err := mail.ParseAddress(email)
+	if err != nil {
+		return nil, ErrInvalidEmail
 	}
 
 	privateKey, err := ecdsa.GenerateKey(elliptic.P256(), rand.Reader)
@@ -82,7 +85,7 @@ func NewCertificate(domains []string, email string) (*Certificate, error) {
 		Secret:     secret,
 		Domains:    domains,
 		CommonName: common,
-		ACMEEmail:  email,
+		ACMEEmail:  e.Address,
 		ACMEKey:    privateKey,
 	}
 

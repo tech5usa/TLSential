@@ -14,6 +14,8 @@ import (
 	"github.com/gorilla/mux"
 )
 
+// TODO: Syslog formatted log/audit files.
+
 var (
 	// ErrMissingID is returned when you made a call that isn't supported
 	// without an ID in the URI
@@ -28,7 +30,7 @@ var (
 // Handler provides an interface for all api/calls.
 type Handler interface {
 	Status() http.HandlerFunc
-	NewMux() *http.ServeMux
+	Route() *mux.Router
 }
 
 type apiHandler struct {
@@ -62,10 +64,10 @@ func (h *apiHandler) Status() http.HandlerFunc {
 }
 
 // TODO: Break this up into sub routers within the handlers.
-func (h *apiHandler) router() *mux.Router {
+func (h *apiHandler) Route() *mux.Router {
 	r := mux.NewRouter()
 
-	r.HandleFunc("/status", h.Status())
+	r.HandleFunc("/api/status", h.Status())
 
 	r.HandleFunc("/api/authenticate", h.authHandler.Authenticate()).Methods("POST")
 
@@ -157,13 +159,4 @@ func (h *apiHandler) router() *mux.Router {
 		)).Methods("DELETE")
 
 	return r
-}
-
-// NewMux returns a new http.ServeMux with established routes.
-func (h *apiHandler) NewMux() *http.ServeMux {
-	r := h.router()
-
-	s := http.NewServeMux()
-	s.Handle("/", r)
-	return s
 }

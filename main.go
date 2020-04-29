@@ -73,8 +73,9 @@ func NewMux(db *bolt.DB) *http.ServeMux {
 	uiHandler := ui.NewHandler("TLSential")
 
 	s := http.NewServeMux()
-	s.Handle("/api/", apiHandler.Route())
 	s.Handle("/", uiHandler.Route())
+	s.Handle("/api/", apiHandler.Route())
+
 	return s
 }
 

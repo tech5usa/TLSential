@@ -2,6 +2,8 @@ package ui
 
 import (
 	"fmt"
+	"html/template"
+	"log"
 	"net/http"
 
 	"github.com/gorilla/mux"
@@ -24,7 +26,29 @@ func (h *uiHandler) Route() *mux.Router {
 	r := mux.NewRouter()
 	r.HandleFunc("/ui/home", h.Home())
 
+	r.PathPrefix("/static/").Handler(http.StripPrefix("/static/", http.FileServer(http.Dir("./static"))))
+
+	r.HandleFunc("/", h.Index())
 	return r
+}
+
+func fileServe(w http.ResponseWriter, r *http.Request) {
+	log.Print(w)
+	log.Print(r)
+	path := fmt.Sprintf("static%s", r.URL.Path)
+	log.Print(path)
+	http.ServeFile(w, r, path)
+}
+
+func (h *uiHandler) Index() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		log.Print(r)
+		t, err := template.ParseFiles("ui/templates/index.html")
+		if err != nil {
+			log.Print(err.Error())
+		}
+		t.Execute(w, h.Title)
+	}
 }
 
 func (h *uiHandler) Home() http.HandlerFunc {

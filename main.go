@@ -12,6 +12,7 @@ import (
 	"github.com/ImageWare/TLSential/certificate"
 	"github.com/ImageWare/TLSential/repository/boltdb"
 	"github.com/ImageWare/TLSential/service"
+	"github.com/ImageWare/TLSential/ui"
 
 	"github.com/boltdb/bolt"
 )
@@ -69,11 +70,13 @@ func main() {
 // NewMux returns a new http.ServeMux with established routes.
 func NewMux(db *bolt.DB) *http.ServeMux {
 	apiHandler := newAPIHandler(db)
-
-	r := apiHandler.Route()
+	cs := newCertService(db)
+	uiHandler := ui.NewHandler("TLSential", cs)
 
 	s := http.NewServeMux()
-	s.Handle("/api/", r)
+	s.Handle("/", uiHandler.Route())
+	s.Handle("/api/", apiHandler.Route())
+
 	return s
 }
 

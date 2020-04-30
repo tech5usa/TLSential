@@ -16,7 +16,7 @@ import (
 )
 
 //Error used internally by Cert(id string). Is not meant to be exposed.
-var certificateNotFound = errors.New("Certificate not found")
+var errCertificateNotFound = errors.New("Certificate not found")
 
 var certBucket = []byte("certs")
 
@@ -132,14 +132,14 @@ func (cr *certRepository) Cert(id string) (*model.Certificate, error) {
 		b := tx.Bucket(certBucket)
 		v := b.Get([]byte(id))
 		if v == nil {
-			return certificateNotFound
+			return errCertificateNotFound
 		}
 
 		err := json.Unmarshal(v, &ec)
 		return err
 	})
 
-	if err == certificateNotFound {
+	if err == errCertificateNotFound {
 		return nil, nil
 	}
 

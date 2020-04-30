@@ -9,6 +9,8 @@ import (
 	"github.com/gorilla/mux"
 )
 
+const localStaticDir = "./static"
+
 // Handler provides an interface for all ui/calls.
 type Handler interface {
 	Route() *mux.Router
@@ -25,25 +27,29 @@ func NewHandler(title string) Handler {
 func (h *uiHandler) Route() *mux.Router {
 	r := mux.NewRouter()
 	r.HandleFunc("/ui/home", h.Home())
+	r.HandleFunc("/ui/cert", h.Certificate())
 
-	r.PathPrefix("/static/").Handler(http.StripPrefix("/static/", http.FileServer(http.Dir("./static"))))
+	// TODO: Make sure this mostly always works no matter what working directory
+	// is.
+	r.PathPrefix("/static/").Handler(http.StripPrefix("/static/", http.FileServer(http.Dir(localStaticDir))))
 
 	r.HandleFunc("/", h.Index())
 	return r
 }
 
-func fileServe(w http.ResponseWriter, r *http.Request) {
-	log.Print(w)
-	log.Print(r)
-	path := fmt.Sprintf("static%s", r.URL.Path)
-	log.Print(path)
-	http.ServeFile(w, r, path)
-}
-
 func (h *uiHandler) Index() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		log.Print(r)
 		t, err := template.ParseFiles("ui/templates/index.html")
+		if err != nil {
+			log.Print(err.Error())
+		}
+		t.Execute(w, h.Title)
+	}
+}
+
+func (h *uiHandler) Certificate() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		t, err := template.ParseFiles("ui/templates/certificate.html")
 		if err != nil {
 			log.Print(err.Error())
 		}

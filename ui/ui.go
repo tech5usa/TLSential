@@ -6,6 +6,8 @@ import (
 	"log"
 	"net/http"
 
+	"github.com/ImageWare/TLSential/certificate"
+	"github.com/ImageWare/TLSential/model"
 	"github.com/gorilla/mux"
 )
 
@@ -17,17 +19,18 @@ type Handler interface {
 }
 
 type uiHandler struct {
-	Title string
+	Title              string
+	certificateService certificate.Service
 }
 
-func NewHandler(title string) Handler {
-	return &uiHandler{title}
+func NewHandler(title string, cs certificate.Service) Handler {
+	return &uiHandler{title, cs}
 }
 
 func (h *uiHandler) Route() *mux.Router {
 	r := mux.NewRouter()
 	r.HandleFunc("/ui/home", h.Home())
-	r.HandleFunc("/ui/cert", h.Certificate())
+	r.HandleFunc("/ui/cert/{id}", h.Certificate())
 
 	// TODO: Make sure this mostly always works no matter what working directory
 	// is.
@@ -49,11 +52,37 @@ func (h *uiHandler) Index() http.HandlerFunc {
 
 func (h *uiHandler) Certificate() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		t, err := template.ParseFiles("ui/templates/certificate.html")
+		t, err := template.ParseGlob("ui/templates/*.html")
 		if err != nil {
 			log.Print(err.Error())
 		}
-		t.Execute(w, h.Title)
+
+		id := mux.Vars(r)["id"]
+
+		cert, err := h.certificateService.Cert(id)
+		if err != nil {
+			log.Print(err.Error())
+			http.Error(w, "whoops", http.StatusInternalServerError)
+			return
+		}
+
+		type Head struct {
+			Title         string
+			CustomCSSFile string
+		}
+		type Page struct {
+			Head
+			Cert *model.Certificate
+		}
+		head := Head{
+			"Certificates beyotch",
+			"certificate.css",
+		}
+		p := Page{
+			head,
+			cert,
+		}
+		t.ExecuteTemplate(w, "certificate", p)
 	}
 }
 

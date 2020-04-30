@@ -70,7 +70,8 @@ func main() {
 // NewMux returns a new http.ServeMux with established routes.
 func NewMux(db *bolt.DB) *http.ServeMux {
 	apiHandler := newAPIHandler(db)
-	uiHandler := ui.NewHandler("TLSential")
+	cs := newCertService(db)
+	uiHandler := ui.NewHandler("TLSential", cs)
 
 	s := http.NewServeMux()
 	s.Handle("/", uiHandler.Route())

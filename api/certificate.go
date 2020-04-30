@@ -21,6 +21,7 @@ const KeyFileExt = ".key"
 const PemFileExt = ".pem"
 
 type CertificateHandler interface {
+	GetAll() http.HandlerFunc
 	Get() http.HandlerFunc
 	Post() http.HandlerFunc
 	Delete() http.HandlerFunc
@@ -111,55 +112,59 @@ func (h *certHandler) Delete() http.HandlerFunc {
 
 }
 
+func (h *certHandler) GetAll() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		certs, err := h.cs.AllCerts()
+		if err != nil {
+			log.Printf("api CertHandler Get(), GetAllCerts(), %s", err.Error())
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		var crs = make([]*CertResp, 0)
+
+		for _, c := range certs {
+			var lastError string
+			if c.LastError != nil {
+				lastError = c.LastError.Error()
+			}
+			cr := &CertResp{
+				ID:            c.ID,
+				Secret:        c.Secret,
+				CommonName:    c.CommonName,
+				Domains:       c.Domains,
+				CertURL:       c.CertURL,
+				CertStableURL: c.CertStableURL,
+				Expiry:        c.Expiry,
+				RenewAt:       c.RenewAt,
+				Issued:        c.Issued,
+				LastError:     lastError,
+				ACMEEmail:     c.ACMEEmail,
+			}
+			crs = append(crs, cr)
+		}
+
+		w.WriteHeader(http.StatusOK)
+		w.Header().Set("Content-Type", "application/json")
+
+		err = json.NewEncoder(w).Encode(crs)
+		if err != nil {
+			log.Printf("apiCertHandler GET ALL, json.Encode(), %s", err.Error())
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+	}
+}
+
 func (h *certHandler) Get() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		vars := mux.Vars(r)
 		id := vars["id"]
 
-		// TODO: Factor out this section into new handler with separate
-		// permissions
-
 		// "/api/certificate/"
 		if id == "" {
-			certs, err := h.cs.AllCerts()
-			if err != nil {
-				log.Printf("api CertHandler Get(), GetAllCerts(), %s", err.Error())
-				http.Error(w, err.Error(), http.StatusInternalServerError)
-				return
-			}
-
-			var crs []*CertResp
-
-			for _, c := range certs {
-				var lastError string
-				if c.LastError != nil {
-					lastError = c.LastError.Error()
-				}
-				cr := &CertResp{
-					ID:            c.ID,
-					Secret:        c.Secret,
-					CommonName:    c.CommonName,
-					Domains:       c.Domains,
-					CertURL:       c.CertURL,
-					CertStableURL: c.CertStableURL,
-					Expiry:        c.Expiry,
-					RenewAt:       c.RenewAt,
-					Issued:        c.Issued,
-					LastError:     lastError,
-					ACMEEmail:     c.ACMEEmail,
-				}
-				crs = append(crs, cr)
-			}
-
-			w.WriteHeader(http.StatusOK)
-			w.Header().Set("Content-Type", "application/json")
-
-			err = json.NewEncoder(w).Encode(crs)
-			if err != nil {
-				log.Printf("apiCertHandler GET ALL, json.Encode(), %s", err.Error())
-				http.Error(w, err.Error(), http.StatusInternalServerError)
-				return
-			}
+			log.Printf("api CertHandler GetCert(), should never have routed here")
+			http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 			return
 		}
 

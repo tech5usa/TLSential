@@ -15,6 +15,9 @@ import (
 	"github.com/go-acme/lego/v3/registration"
 )
 
+//Error used internally by Cert(id string). Is not meant to be exposed.
+var errCertificateNotFound = errors.New("Certificate not found")
+
 var certBucket = []byte("certs")
 
 var certBuckets = []string{
@@ -93,7 +96,7 @@ func (cr *certRepository) AllCerts() ([]*model.Certificate, error) {
 		return nil
 	})
 
-	var certs []*model.Certificate
+	var certs = make([]*model.Certificate, 0)
 	for _, ec := range ecerts {
 		var lastError error
 		if ec.LastError != "" {
@@ -129,12 +132,16 @@ func (cr *certRepository) Cert(id string) (*model.Certificate, error) {
 		b := tx.Bucket(certBucket)
 		v := b.Get([]byte(id))
 		if v == nil {
-			return nil
+			return errCertificateNotFound
 		}
 
 		err := json.Unmarshal(v, &ec)
 		return err
 	})
+
+	if err == errCertificateNotFound {
+		return nil, nil
+	}
 
 	var lastError error
 	if ec.LastError != "" {

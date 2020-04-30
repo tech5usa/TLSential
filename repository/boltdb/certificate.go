@@ -231,8 +231,13 @@ func encode(privateKey *ecdsa.PrivateKey) string {
 
 func decode(pemEncoded string) *ecdsa.PrivateKey {
 	block, _ := pem.Decode([]byte(pemEncoded))
+	if block == nil {
+		return nil
+	}
 	x509Encoded := block.Bytes
-	privateKey, _ := x509.ParseECPrivateKey(x509Encoded)
-
+	privateKey, err := x509.ParseECPrivateKey(x509Encoded)
+	if err != nil {
+		return nil
+	}
 	return privateKey
 }

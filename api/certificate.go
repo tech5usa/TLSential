@@ -121,7 +121,7 @@ func (h *certHandler) GetAll() http.HandlerFunc {
 			return
 		}
 
-		var crs []*CertResp
+		var crs = make([]*CertResp, 0)
 
 		for _, c := range certs {
 			var lastError string

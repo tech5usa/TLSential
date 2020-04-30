@@ -77,7 +77,7 @@ func (h *uiHandler) Certificate() http.HandlerFunc {
 			Cert *model.Certificate
 		}
 		head := Head{
-			"Certificates beyotch",
+			fmt.Sprintf("Certificate - %s", cert.CommonName),
 			"certificate.css",
 		}
 		p := Page{

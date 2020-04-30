@@ -125,8 +125,6 @@ func (cr *certRepository) AllCerts() ([]*model.Certificate, error) {
 	return certs, err
 }
 
-
-
 // Cert takes an id and returns their whole cert object.
 func (cr *certRepository) Cert(id string) (*model.Certificate, error) {
 	ec := &encodedCert{}
@@ -142,7 +140,7 @@ func (cr *certRepository) Cert(id string) (*model.Certificate, error) {
 	})
 
 	if err == certificateNotFound {
-		return nil,nil 
+		return nil, nil
 	}
 
 	var lastError error

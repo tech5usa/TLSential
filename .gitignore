@@ -1,6 +1,6 @@
 TLSential
 *.db
-
+*.swp
 poc/poc
 
 # Binaries for programs and plugins

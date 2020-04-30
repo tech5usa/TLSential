@@ -55,6 +55,8 @@ func (h *uiHandler) Certificate() http.HandlerFunc {
 		t, err := template.ParseGlob("ui/templates/*.html")
 		if err != nil {
 			log.Print(err.Error())
+			http.Error(w, "drats", http.StatusInternalServerError)
+			return
 		}
 
 		id := mux.Vars(r)["id"]

@@ -16,7 +16,7 @@ import (
 )
 
 //Error used internally by Cert(id string). Is not meant to be exposed.
-var certificateNotFound := errors.New("Certificate not found")
+var certificateNotFound = errors.New("Certificate not found")
 
 var certBucket = []byte("certs")
 
@@ -96,7 +96,7 @@ func (cr *certRepository) AllCerts() ([]*model.Certificate, error) {
 		return nil
 	})
 
-	var certs []*model.Certificate
+	var certs = make([]*model.Certificate, 0)
 	for _, ec := range ecerts {
 		var lastError error
 		if ec.LastError != "" {

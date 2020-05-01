@@ -137,7 +137,7 @@ func (h *apiHandler) Route() *mux.Router {
 	r.HandleFunc("/api/user/",
 		h.midHandler.Permission(
 			auth.PermUserRead,
-			h.userHandler.Get(),
+			h.userHandler.GetAll(),
 		)).Methods("GET")
 
 	r.HandleFunc("/api/user/{id}",
@@ -158,10 +158,10 @@ func (h *apiHandler) Route() *mux.Router {
 			h.userHandler.Put(),
 		)).Methods("PUT")
 
-	r.HandleFunc("/api/user/",
+	r.HandleFunc("/api/user",
 		h.midHandler.Permission(
 			auth.PermUserWrite,
-			h.userHandler.Delete(),
+			h.userHandler.DeleteAll(),
 		)).Methods("DELETE")
 
 	r.HandleFunc("/api/user/{id}",

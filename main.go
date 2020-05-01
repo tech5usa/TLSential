@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"strings"
 
 	"github.com/ImageWare/TLSential/acme"
 	"github.com/ImageWare/TLSential/api"
@@ -61,10 +62,19 @@ func main() {
 
 	s := http.Server{
 		Addr:    fmt.Sprintf(":%d", port),
-		Handler: mux,
+		Handler: removeTrailingSlash(mux),
 	}
 
 	log.Fatal(s.ListenAndServe())
+}
+
+func removeTrailingSlash(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path != "/" {
+			r.URL.Path = strings.TrimSuffix(r.URL.Path, "/")
+		}
+		next.ServeHTTP(w, r)
+	})
 }
 
 // NewMux returns a new http.ServeMux with established routes.

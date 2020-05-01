@@ -95,7 +95,7 @@ func (h *apiHandler) Route() *mux.Router {
 	r.HandleFunc("/api/certificate",
 		h.midHandler.Permission(
 			auth.PermCertAdmin,
-			h.certificateHandler.DeleteAll()
+			h.certificateHandler.DeleteAll(),
 		)).Methods("DELETE")
 	
 	r.HandleFunc("/api/certificate/{id}",

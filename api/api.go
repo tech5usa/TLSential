@@ -74,7 +74,7 @@ func (h *apiHandler) Route() *mux.Router {
 	r.HandleFunc("/api/config/superadmin/{id}", h.configHandler.SuperAdmin()).Methods("POST")
 
 	// api/certificate
-	r.HandleFunc("/api/{certificate:certificate(?:\\/)?}",
+	r.HandleFunc("/api/certificate",
 		h.midHandler.Permission(
 			auth.PermCertAdmin,
 			h.certificateHandler.GetAll(),

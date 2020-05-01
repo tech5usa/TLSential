@@ -124,26 +124,25 @@ func (h *userHandler) Delete() http.HandlerFunc {
 
 }
 
-
 func (h *userHandler) GetAll() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		users, err := h.us.GetAllUsers()
-			if err != nil {
-				log.Printf("apiUserGETHandler, GetAllUsers(), %s", err.Error())
-				http.Error(w, err.Error(), http.StatusInternalServerError)
-				return
-			}
-
-			var urs = make([]*UserResp,0)
-			for _, u := range users {
-				ur := &UserResp{Name: u.Name, Role: u.Role}
-				urs = append(urs, ur)
-			}
-
-			w.WriteHeader(http.StatusOK)
-			w.Header().Set("Content-Type", "application/json")
-			json.NewEncoder(w).Encode(urs)
+		if err != nil {
+			log.Printf("apiUserGETHandler, GetAllUsers(), %s", err.Error())
+			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
+		}
+
+		var urs = make([]*UserResp, 0)
+		for _, u := range users {
+			ur := &UserResp{Name: u.Name, Role: u.Role}
+			urs = append(urs, ur)
+		}
+
+		w.WriteHeader(http.StatusOK)
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(urs)
+		return
 	}
 }
 
@@ -167,7 +166,7 @@ func (h *userHandler) Get() http.HandlerFunc {
 
 		// Make an appropriate response object (ie. no hash returned)
 		ur := &UserResp{Name: u.Name, Role: u.Role}
-		
+
 		w.WriteHeader(http.StatusOK)
 		w.Header().Set("Content-Type", "application/json")
 		json.NewEncoder(w).Encode(ur)

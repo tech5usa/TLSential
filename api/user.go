@@ -76,23 +76,23 @@ func validateUserReq(u *UserReq) error {
 	return nil
 }
 
+func (h *userHandler) DeleteAll() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		err := h.us.DeleteAllUsers()
+		if err != nil {
+			log.Printf("apiIdentDELETEHandler, DeleteAllIdentities(), %s", err.Error())
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		w.WriteHeader(http.StatusNoContent)
+		return
+	}
+}
+
 func (h *userHandler) Delete() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		vars := mux.Vars(r)
 		id := vars["id"]
-
-		// DELETE /api/user/
-		// Delete all users
-		if id == "" {
-			err := h.us.DeleteAllUsers()
-			if err != nil {
-				log.Printf("apiIdentDELETEHandler, DeleteAllIdentities(), %s", err.Error())
-				http.Error(w, err.Error(), http.StatusInternalServerError)
-				return
-			}
-			w.WriteHeader(http.StatusNoContent)
-			return
-		}
 
 		// Delete user
 		u, err := h.us.GetUser(id)
@@ -122,22 +122,17 @@ func (h *userHandler) Delete() http.HandlerFunc {
 
 }
 
-func (h *userHandler) Get() http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		vars := mux.Vars(r)
-		id := vars["id"]
 
-		// TODO: Factor out this section into new handler perhaps.
-		// "/api/user/"
-		if id == "" {
-			users, err := h.us.GetAllUsers()
+func (h *userHandler) GetAll() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		users, err := h.us.GetAllUsers()
 			if err != nil {
 				log.Printf("apiUserGETHandler, GetAllUsers(), %s", err.Error())
 				http.Error(w, err.Error(), http.StatusInternalServerError)
 				return
 			}
 
-			var urs []*UserResp
+			var urs = make([]*UserResp,0)
 			for _, u := range users {
 				ur := &UserResp{Name: u.Name, Role: u.Role}
 				urs = append(urs, ur)
@@ -147,7 +142,13 @@ func (h *userHandler) Get() http.HandlerFunc {
 			w.Header().Set("Content-Type", "application/json")
 			json.NewEncoder(w).Encode(urs)
 			return
-		}
+	}
+}
+
+func (h *userHandler) Get() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		vars := mux.Vars(r)
+		id := vars["id"]
 
 		// Return user if found
 		u, err := h.us.GetUser(id)

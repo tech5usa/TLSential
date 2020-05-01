@@ -32,9 +32,11 @@ var (
 )
 
 type UserHandler interface {
+	GetAll() http.HandlerFunc
 	Get() http.HandlerFunc
 	Put() http.HandlerFunc
 	Delete() http.HandlerFunc
+	DeleteAll() http.HandlerFunc
 }
 
 type userHandler struct {

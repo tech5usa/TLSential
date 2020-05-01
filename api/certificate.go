@@ -25,6 +25,7 @@ type CertificateHandler interface {
 	Get() http.HandlerFunc
 	Post() http.HandlerFunc
 	Delete() http.HandlerFunc
+	DeleteAll() http.HandlerFunc
 	GetCert() http.HandlerFunc
 	GetPrivkey() http.HandlerFunc
 	GetIssuer() http.HandlerFunc

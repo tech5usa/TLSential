@@ -65,24 +65,24 @@ type CertResp struct {
 
 // TODO: Refactor sys logging to be more consistent and easier.
 
+func (h *certHandler) DeleteAll() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		err := h.cs.DeleteAllCerts()
+		if err != nil {
+			log.Printf("apiCertHandler DELETE, DeleteAllCerts(), %s", err.Error())
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		w.WriteHeader(http.StatusNoContent)
+		return
+	}
+}
+
 // Delete handles all delete calls to api/certificate
 func (h *certHandler) Delete() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		vars := mux.Vars(r)
 		id := vars["id"]
-
-		// DELETE /api/certificate/
-		// Delete all certs
-		if id == "" {
-			err := h.cs.DeleteAllCerts()
-			if err != nil {
-				log.Printf("apiCertHandler DELETE, DeleteAllCerts(), %s", err.Error())
-				http.Error(w, err.Error(), http.StatusInternalServerError)
-				return
-			}
-			w.WriteHeader(http.StatusNoContent)
-			return
-		}
 
 		// Delete cert
 		u, err := h.cs.Cert(id)

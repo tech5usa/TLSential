@@ -141,7 +141,15 @@ func (h *userHandler) GetAll() http.HandlerFunc {
 
 		w.WriteHeader(http.StatusOK)
 		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(urs)
+
+		err = json.NewEncoder(w).Encode(urs)
+
+		if err != nil {
+			log.Printf("apiUserGETHandler, GetAllUsers(), json.Encode(), %s", err.Error())
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+
 		return
 	}
 }
@@ -169,7 +177,14 @@ func (h *userHandler) Get() http.HandlerFunc {
 
 		w.WriteHeader(http.StatusOK)
 		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(ur)
+
+		err = json.NewEncoder(w).Encode(ur)
+
+		if err != nil {
+			log.Printf("apiUserGETHandler GetUser(), json.Encode(), %s", err.Error())
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
 	}
 }
 

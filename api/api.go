@@ -134,7 +134,7 @@ func (h *apiHandler) Route() *mux.Router {
 		)).Methods("PUT")
 
 	// api/user
-	r.HandleFunc("/api/user/",
+	r.HandleFunc("/api/user",
 		h.midHandler.Permission(
 			auth.PermUserRead,
 			h.userHandler.GetAll(),
@@ -146,7 +146,7 @@ func (h *apiHandler) Route() *mux.Router {
 			h.userHandler.Get(),
 		)).Methods("GET")
 
-	r.HandleFunc("/api/user/",
+	r.HandleFunc("/api/user",
 		h.midHandler.Permission(
 			auth.PermUserWrite,
 			h.userHandler.Put(),

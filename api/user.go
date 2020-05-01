@@ -167,16 +167,10 @@ func (h *userHandler) Get() http.HandlerFunc {
 
 		// Make an appropriate response object (ie. no hash returned)
 		ur := &UserResp{Name: u.Name, Role: u.Role}
-		buf, err := json.Marshal(ur)
-		if err != nil {
-			log.Printf("apiUserGETHandler, json.Marshal(), %s", err.Error())
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
-		}
-
+		
 		w.WriteHeader(http.StatusOK)
 		w.Header().Set("Content-Type", "application/json")
-		fmt.Fprintf(w, "%s", buf)
+		json.NewEncoder(w).Encode(ur)
 	}
 }
 

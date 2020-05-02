@@ -35,7 +35,7 @@ func main() {
 
 	// Grab any command line arguments
 	flag.StringVar(&email, "email", "test@example.com", "Email address for Let's Encrypt account")
-	flag.IntVar(&port, "port", 80, "port for webserver to run on")
+	flag.IntVar(&port, "port", 443, "port for webserver to run on")
 	flag.StringVar(&dbFile, "db", "tlsential.db", "filename for boltdb database")
 	flag.BoolVar(&secretReset, "secret-reset", false, "reset the JWT secret - invalidates all API sessions")
 	flag.StringVar(&tlsCert, "tls-cert", "/etc/pki/tlsential.crt", "file path for tls certificate")

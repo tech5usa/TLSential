@@ -45,6 +45,7 @@ func NewCertificateHandler(cs certificate.Service, as acme.Service) CertificateH
 type CertReq struct {
 	Domains []string
 	Email   string
+	RenewAt int
 }
 
 // CertResp is used for exporting User data via API responses
@@ -222,7 +223,9 @@ func (h *certHandler) Post() http.HandlerFunc {
 		}
 
 		// Decode JSON payload
-		creq := &CertReq{}
+		creq := &CertReq{
+			RenewAt: model.DefaultRenewAt, //Set a default value for RenewAt
+		}
 		err := json.NewDecoder(r.Body).Decode(creq)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusBadRequest)
@@ -237,6 +240,13 @@ func (h *certHandler) Post() http.HandlerFunc {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
+
+		//TODO: Should probably decide valid range for client supplied RenewAt value
+		//For instance we may not want them to be able to specify 0 or less, as that would
+		//cause the cert to never auto renew. Although maybe thats a valid use case?
+		//We may also not want them to be able to specify a time as long or longer than the certs lifetime
+		//as that would cause to autorenew every time autoRenewal is run.
+		c.RenewAt = creq.RenewAt
 
 		// Save to database
 		err = h.cs.SaveCert(c)

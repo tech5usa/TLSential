@@ -29,12 +29,19 @@ func main() {
 	var port int
 	var dbFile string
 	var secretReset bool
+	var tlsCert string
+	var tlsKey string
+	var noHttps bool
 
 	// Grab any command line arguments
 	flag.StringVar(&email, "email", "test@example.com", "Email address for Let's Encrypt account")
 	flag.IntVar(&port, "port", 80, "port for webserver to run on")
-	flag.StringVar(&dbFile, "database file", "tlsential.db", "filename for boltdb database")
+	flag.StringVar(&dbFile, "db", "tlsential.db", "filename for boltdb database")
 	flag.BoolVar(&secretReset, "secret-reset", false, "reset the JWT secret - invalidates all API sessions")
+	flag.StringVar(&tlsCert, "tls-cert", "/etc/pki/tlsential.crt", "file path for tls certificate")
+	flag.StringVar(&tlsKey, "tls-key", "/etc/pki/tlsential.key", "file path for tls private key")
+	flag.BoolVar(&noHttps, "no-https", false, "flag to run over http (HIGHLY INSECURE)")
+
 	flag.Parse()
 
 	// Open our database file.
@@ -46,7 +53,6 @@ func main() {
 
 	if secretReset {
 		resetSecret(db)
-
 	}
 
 	initSecret(db)
@@ -65,9 +71,18 @@ func main() {
 		Handler: removeTrailingSlash(mux),
 	}
 
-	log.Fatal(s.ListenAndServe())
+	if noHttps {
+		fmt.Println("*** WARNING ***")
+		fmt.Println("* It is extremely unsafe to use this app without proper HTTPS *")
+		log.Fatal(s.ListenAndServe())
+	} else {
+		log.Fatal(s.ListenAndServeTLS(tlsCert, tlsKey))
+	}
+
 }
 
+// removeTrailingSlash removes any final / off the end of routes, otherwise
+// gorilla mux treats url/ and url differently which is unneeded in this app.
 func removeTrailingSlash(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if r.URL.Path != "/" {

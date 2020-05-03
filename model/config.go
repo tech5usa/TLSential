@@ -9,4 +9,6 @@ type Config struct {
 	// SuperAdmin is the username of the SA account. If this is "" we allow
 	// generation of a new one from the superadmin endpoint. (first time running)
 	SuperAdmin string
+
+	SessionKey []byte
 }

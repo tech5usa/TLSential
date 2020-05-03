@@ -9,6 +9,7 @@ import (
 	"github.com/ImageWare/TLSential/certificate"
 	"github.com/ImageWare/TLSential/model"
 	"github.com/gorilla/mux"
+	"github.com/gorilla/sessions"
 )
 
 // Handler provides an interface for all ui/calls.
@@ -19,6 +20,7 @@ type Handler interface {
 type uiHandler struct {
 	Title              string
 	certificateService certificate.Service
+	store              *sessions.CookieStore
 }
 
 func NewHandler(title string, cs certificate.Service) Handler {

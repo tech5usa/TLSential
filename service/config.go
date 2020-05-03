@@ -75,3 +75,13 @@ func (s *configService) CreateSuperAdmin(name string) (*model.User, string, erro
 func (s *configService) ResetSuperAdmin() error {
 	return s.repo.SetSuperAdmin("")
 }
+
+// SessionKey returns the stored session key for use in gorilla sessions.
+func (s *configService) SessionKey() ([]byte, error) {
+	return s.repo.SessionKey()
+}
+
+// SetSessionKey stores the gorilla sessions key.
+func (s *configService) SetSessionKey(key []byte) error {
+	return s.repo.SetSessionKey(key)
+}

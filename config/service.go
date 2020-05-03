@@ -12,4 +12,6 @@ type Service interface {
 	SetJWTSecret([]byte) error
 	CreateSuperAdmin(string) (user *model.User, password string, err error)
 	ResetSuperAdmin() error
+	SessionKey() ([]byte, error)
+	SetSessionKey([]byte) error
 }

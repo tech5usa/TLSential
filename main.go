@@ -33,6 +33,7 @@ func main() {
 	var port int
 	var dbFile string
 	var secretReset bool
+	var sessionReset bool
 	var tlsCert string
 	var tlsKey string
 	var noHTTPS bool
@@ -42,6 +43,7 @@ func main() {
 	flag.IntVar(&port, "port", 443, "port for webserver to run on")
 	flag.StringVar(&dbFile, "db", "tlsential.db", "filename for boltdb database")
 	flag.BoolVar(&secretReset, "secret-reset", false, "reset the JWT secret - invalidates all API sessions")
+	flag.BoolVar(&secretReset, "session-reset", false, "reset the Session secret - invalidates all Web sessions")
 	flag.StringVar(&tlsCert, "tls-cert", "/etc/pki/tlsential.crt", "file path for tls certificate")
 	flag.StringVar(&tlsKey, "tls-key", "/etc/pki/tlsential.key", "file path for tls private key")
 	flag.BoolVar(&noHTTPS, "no-https", false, "flag to run over http (HIGHLY INSECURE)")
@@ -60,8 +62,11 @@ func main() {
 	if secretReset {
 		resetSecret(db)
 	}
-
 	initSecret(db)
+
+	if sessionReset {
+		resetSessionKey(db)
+	}
 
 	// Start a goroutine to automatically renew certificates in the DB.
 	cs := newCertService(db)
@@ -187,6 +192,27 @@ func initSecret(db *bolt.DB) {
 	}
 }
 
+func initSessionKey(db *bolt.DB) {
+	crepo, err := boltdb.NewConfigRepository(db)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	s, err := crepo.SessionKey()
+	if err != nil {
+		log.Fatal(err)
+	}
+	if len(s) < 32 {
+		c := 32
+		b := make([]byte, c)
+		_, err := rand.Read(b)
+		if err != nil {
+			log.Fatal(err)
+		}
+		crepo.SetSessionKey(b)
+	}
+}
+
 func resetSecret(db *bolt.DB) {
 	crepo, err := boltdb.NewConfigRepository(db)
 	if err != nil {
@@ -194,6 +220,18 @@ func resetSecret(db *bolt.DB) {
 	}
 
 	err = crepo.SetJWTSecret(nil)
+	if err != nil {
+		log.Fatal(err)
+	}
+}
+
+func resetSessionKey(db *bolt.DB) {
+	crepo, err := boltdb.NewConfigRepository(db)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	err = crepo.SetSessionKey(nil)
 	if err != nil {
 		log.Fatal(err)
 	}

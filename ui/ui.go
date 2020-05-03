@@ -38,6 +38,11 @@ type headTemplate struct {
 	CustomCSSFile string
 }
 
+type layoutTemplate struct {
+	Head headTemplate
+	C    interface{}
+}
+
 type loginTemplate struct {
 	Head headTemplate
 }
@@ -55,7 +60,6 @@ func (h *uiHandler) Login() http.HandlerFunc {
 }
 
 type dashboardTemplate struct {
-	Head              headTemplate
 	TotalCerts        int
 	TotalRenewedCerts int
 	TotalDomains      int
@@ -64,28 +68,43 @@ type dashboardTemplate struct {
 // Serve /ui/dashboard page.
 func (h *uiHandler) Dashboard() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		t, err := template.ParseGlob("ui/templates/*.html")
+		files := []string{
+			"ui/templates/layout.html",
+			"ui/templates/head.html",
+			"ui/templates/footer.html",
+			"ui/templates/dashboard.html",
+		}
+		t, err := template.ParseFiles(files...)
 		if err != nil {
 			log.Print(err.Error())
 		}
 		head := headTemplate{"Dashboard", "dashboard.css"}
 
 		// TODO: Fill out appropriate data for cert, renewed cert, and domain counts.
-		d := dashboardTemplate{head, 4, 20, 69}
-		t, _ = template.ParseFiles("layout.html", "dashboard.html")
-		t.ExecuteTemplate(w, "dashboard", d)
+		d := dashboardTemplate{4, 20, 69}
+		l := layoutTemplate{head, d}
+
+		err = t.ExecuteTemplate(w, "layout", l)
+		if err != nil {
+			log.Print(err.Error())
+		}
 	}
 }
 
 type certTemplate struct {
-	Head headTemplate
 	Cert *model.Certificate
 }
 
 // Serve /ui/certificate page.
 func (h *uiHandler) Certificate() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		t, err := template.ParseGlob("ui/templates/*.html")
+		files := []string{
+			"ui/templates/layout.html",
+			"ui/templates/head.html",
+			"ui/templates/footer.html",
+			"ui/templates/certificate.html",
+		}
+		t, err := template.ParseFiles(files...)
 		if err != nil {
 			log.Print(err.Error())
 			http.Error(w, "drats", http.StatusInternalServerError)
@@ -106,9 +125,12 @@ func (h *uiHandler) Certificate() http.HandlerFunc {
 			"certificate.css",
 		}
 		p := certTemplate{
-			head,
 			cert,
 		}
-		t.ExecuteTemplate(w, "certificate", p)
+		l := layoutTemplate{
+			head,
+			p,
+		}
+		t.ExecuteTemplate(w, "layout", l)
 	}
 }

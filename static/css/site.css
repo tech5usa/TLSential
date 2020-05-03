@@ -1,4 +1,4 @@
-tls-form {
+.tls-form {
     position: relative;
     padding: 1rem;
     margin: 1rem -15px 0;
@@ -27,7 +27,7 @@ body {
   height: 100%;
 }
 
-main.login {
+/* main.login {
   display: -ms-flexbox;
   display: -webkit-box;
   display: flex;
@@ -40,13 +40,23 @@ main.login {
   padding-top: 40px;
   padding-bottom: 40px;
   background-color: #f2f2f2;
-}
+} */
 
 .form-signin {
   width: 100%;
-  max-width: 330px;
+  max-width: 448px;
   padding: 15px;
-  margin: 0 auto;
+  background: white;
+  margin-top: 4rem;
+  border-radius: 4px; 
+  box-shadow: rgba(60, 66, 87, 0.12) 0px 7px 14px 0px, rgba(0, 0, 0, 0.12) 0px 3px 6px 0px; 
+  transform: translate3d(var(--auto-translate-x), var(--auto-translate-y), 0); 
+  transform-origin: 0% 0%; width: calc(100% * var(--auto-scale-x)); 
+  height: calc(100% * var(--auto-scale-y)); 
+  will-change: transform, width, height; 
+  box-sizing: border-box; 
+  position: absolute; 
+  pointer-events: none;
 }
 .form-signin .checkbox {
   font-weight: 400;

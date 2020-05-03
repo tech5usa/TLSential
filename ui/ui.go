@@ -29,27 +29,50 @@ func NewHandler(title string, cs certificate.Service) Handler {
 
 func (h *uiHandler) Route() *mux.Router {
 	r := mux.NewRouter()
-	r.HandleFunc("/ui/home", h.Home())
+	r.HandleFunc("/ui/dashboard", h.Dashboard())
 	r.HandleFunc("/ui/cert/{id}", h.Certificate())
 
 	// TODO: Make sure this mostly always works no matter what working directory
 	// is.
 	r.PathPrefix("/static/").Handler(http.StripPrefix("/static/", http.FileServer(http.Dir(localStaticDir))))
 
-	r.HandleFunc("/", h.Index())
+	r.Handle("/", http.RedirectHandler("/ui/dashboard", http.StatusMovedPermanently))
 	return r
 }
 
-func (h *uiHandler) Index() http.HandlerFunc {
+type headTemplate struct {
+	Title         string
+	CustomCSSFile string
+}
+
+type dashboardTemplate struct {
+	Head              headTemplate
+	TotalCerts        int
+	TotalRenewedCerts int
+	TotalDomains      int
+}
+
+// Serve /ui/dashboard page.
+func (h *uiHandler) Dashboard() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		t, err := template.ParseFiles("ui/templates/index.html")
+		t, err := template.ParseGlob("ui/templates/*.html")
 		if err != nil {
 			log.Print(err.Error())
 		}
-		t.Execute(w, h.Title)
+		head := headTemplate{"Dashboard", "dashboard.css"}
+
+		// TODO: Fill out appropriate data for cert, renewed cert, and domain counts.
+		d := dashboardTemplate{head, 4, 20, 69}
+		t.ExecuteTemplate(w, "dashboard", d)
 	}
 }
 
+type certTemplate struct {
+	Head headTemplate
+	Cert *model.Certificate
+}
+
+// Serve /ui/certificate page.
 func (h *uiHandler) Certificate() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		t, err := template.ParseGlob("ui/templates/*.html")
@@ -68,28 +91,14 @@ func (h *uiHandler) Certificate() http.HandlerFunc {
 			return
 		}
 
-		type Head struct {
-			Title         string
-			CustomCSSFile string
-		}
-		type Page struct {
-			Head
-			Cert *model.Certificate
-		}
-		head := Head{
+		head := headTemplate{
 			fmt.Sprintf("Certificate - %s", cert.CommonName),
 			"certificate.css",
 		}
-		p := Page{
+		p := certTemplate{
 			head,
 			cert,
 		}
 		t.ExecuteTemplate(w, "certificate", p)
-	}
-}
-
-func (h *uiHandler) Home() http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		fmt.Fprintf(w, "<html><head>%s</head><body><h1>%s</h1></body></html>", h.Title, h.Title)
 	}
 }

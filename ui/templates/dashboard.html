@@ -1,0 +1,38 @@
+{{define "dashboard"}}
+
+{{template "head" .Head}}
+
+  <body>
+
+    <div class="container">
+      <div class="py-5">
+          <img class="mb-4" src="/static/images/tlsential_web_logo.svg" alt="TLSential"
+          height="72">
+        <h2>Dashboard</h2>
+      </div>
+
+      <div class="row">
+
+        <div class="col-md-8 order-md-1">
+          <h4 class="mb-3">Stats</h4>
+          <form class="needs-validation" novalidate>
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                  <label for="id">Total Certs:</label>
+                  {{.TotalCerts}}
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label for="secret">Renewed Certs:</label>
+                    {{ .TotalRenewedCerts}}
+                  </div>
+                  <div class="col-md-6 mb-3">
+                    <label for="secret">Total Domains:</label>
+                    {{ .TotalDomains}}
+                  </div>
+            </div>
+            
+        </div>
+      </div>
+{{template "footer"}}
+
+{{end}}

@@ -53,7 +53,7 @@ func (h *uiHandler) Login() http.HandlerFunc {
 		if err != nil {
 			log.Print(err.Error())
 		}
-		head := headTemplate{"Login", "login.css"}
+		head := headTemplate{"Login", "site.css"}
 		p := loginTemplate{head}
 		err = t.ExecuteTemplate(w, "login", p)
 		if err != nil {
@@ -81,7 +81,7 @@ func (h *uiHandler) Dashboard() http.HandlerFunc {
 		if err != nil {
 			log.Print(err.Error())
 		}
-		head := headTemplate{"Dashboard", "dashboard.css"}
+		head := headTemplate{"Dashboard", "site.css"}
 
 		// TODO: Fill out appropriate data for cert, renewed cert, and domain counts.
 		d := dashboardTemplate{4, 20, 69}
@@ -125,7 +125,7 @@ func (h *uiHandler) Certificate() http.HandlerFunc {
 
 		head := headTemplate{
 			fmt.Sprintf("Certificate - %s", cert.CommonName),
-			"certificate.css",
+			"site.css",
 		}
 		p := certTemplate{
 			cert,

@@ -16,12 +16,15 @@ import (
 	"github.com/ImageWare/TLSential/repository/boltdb"
 	"github.com/ImageWare/TLSential/service"
 	"github.com/ImageWare/TLSential/ui"
+	"github.com/gorilla/mux"
 
 	"github.com/boltdb/bolt"
 )
 
 // Version is the official version of the server app.
 const Version = "v0.0.1"
+
+const localStaticDir = "./static"
 
 func main() {
 	fmt.Println("///- Starting up TLSential")
@@ -148,8 +151,17 @@ func NewMux(db *bolt.DB) *http.ServeMux {
 	uiHandler := ui.NewHandler("TLSential", cs)
 
 	s := http.NewServeMux()
-	s.Handle("/", uiHandler.Route())
+	s.Handle("/ui/", uiHandler.Route())
+
 	s.Handle("/api/", apiHandler.Route())
+
+	r := mux.NewRouter()
+	// TODO: Make sure this mostly always works no matter what working directory
+	// is.
+	r.PathPrefix("/static/").Handler(http.StripPrefix("/static/", http.FileServer(http.Dir(localStaticDir))))
+	s.Handle("/static/", r)
+
+	s.Handle("/", http.RedirectHandler("/ui/dashboard", http.StatusMovedPermanently))
 
 	return s
 }

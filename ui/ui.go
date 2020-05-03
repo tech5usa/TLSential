@@ -11,8 +11,6 @@ import (
 	"github.com/gorilla/mux"
 )
 
-const localStaticDir = "./static"
-
 // Handler provides an interface for all ui/calls.
 type Handler interface {
 	Route() *mux.Router
@@ -31,18 +29,29 @@ func (h *uiHandler) Route() *mux.Router {
 	r := mux.NewRouter()
 	r.HandleFunc("/ui/dashboard", h.Dashboard())
 	r.HandleFunc("/ui/cert/{id}", h.Certificate())
-
-	// TODO: Make sure this mostly always works no matter what working directory
-	// is.
-	r.PathPrefix("/static/").Handler(http.StripPrefix("/static/", http.FileServer(http.Dir(localStaticDir))))
-
-	r.Handle("/", http.RedirectHandler("/ui/dashboard", http.StatusMovedPermanently))
+	r.HandleFunc("/ui/login", h.Login())
 	return r
 }
 
 type headTemplate struct {
 	Title         string
 	CustomCSSFile string
+}
+
+type loginTemplate struct {
+	Head headTemplate
+}
+
+func (h *uiHandler) Login() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		t, err := template.ParseGlob("ui/templates/*.html")
+		if err != nil {
+			log.Print(err.Error())
+		}
+		head := headTemplate{"Login", "login.css"}
+		p := loginTemplate{head}
+		t.ExecuteTemplate(w, "login", p)
+	}
 }
 
 type dashboardTemplate struct {

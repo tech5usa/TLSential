@@ -34,6 +34,7 @@ func main() {
 	var tlsCert string
 	var tlsKey string
 	var noHTTPS bool
+	var noHTTPRedirect bool
 
 	// Grab any command line arguments
 	flag.StringVar(&email, "email", "test@example.com", "Email address for Let's Encrypt account")
@@ -43,6 +44,7 @@ func main() {
 	flag.StringVar(&tlsCert, "tls-cert", "/etc/pki/tlsential.crt", "file path for tls certificate")
 	flag.StringVar(&tlsKey, "tls-key", "/etc/pki/tlsential.key", "file path for tls private key")
 	flag.BoolVar(&noHTTPS, "no-https", false, "flag to run over http (HIGHLY INSECURE)")
+	flag.BoolVar(&noHTTPRedirect, "no-http-redirect", false, "flag to not redirect HTTP requests to HTTPS")
 
 	flag.Parse()
 
@@ -121,9 +123,9 @@ func main() {
 			}),
 		}
 
-		go func() {
-			log.Print(httpSrv.ListenAndServe())
-		}()
+		if !noHTTPRedirect {
+			go func() { log.Fatal(httpSrv.ListenAndServe()) }()
+		}
 
 		log.Fatal(s.ListenAndServeTLS(tlsCert, tlsKey))
 	}

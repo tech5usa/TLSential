@@ -14,7 +14,7 @@
       </div>
       <div class="row">
         <div class="col-12 d-flex justify-content-center">
-          <form class="form-signin mt-4">
+          <form class="form-signin mt-4" action="/ui/login" method="POST" role="form">
             <div class="px-3 pt-4">
               <h1 class="h3 mb-3 font-weight-normal">Please sign in</h1>
               <div class="form-row">
@@ -34,7 +34,7 @@
               </div>
               <button class="btn btn-lg btn-primary btn-block" type="submit">Sign in</button>
             </div>
-            {{if .Error != ""}}{{.Error}}{{end}}
+            {{if .Error ne ""}}{{.Error}}{{end}}
             <p class="text-center mt-4 mb-3 text-muted">&copy; ImageWare Systems Inc. 2020</p>
           </form>
         </div>

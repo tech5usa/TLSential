@@ -101,9 +101,11 @@ func (h *uiHandler) renderLogin(w http.ResponseWriter, uiError string) {
 
 func (h *uiHandler) PostLogin() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		log.Print("what what")
+
 		r.ParseForm()
-		username := r.FormValue("username")
-		password := r.FormValue("password")
+		username := r.Form["username"]
+		password := r.Form["password"]
 
 		var uiError string
 
@@ -111,12 +113,16 @@ func (h *uiHandler) PostLogin() http.HandlerFunc {
 		if err != nil {
 			log.Print(err)
 			uiError = "Server error. Please try again later."
+			log.Print(uiError)
+
 			h.renderLogin(w, uiError)
 			return
 		}
 
 		if u == nil {
 			uiError = "User not found."
+			log.Print(uiError)
+
 			h.renderLogin(w, uiError)
 			return
 		}
@@ -125,12 +131,15 @@ func (h *uiHandler) PostLogin() http.HandlerFunc {
 		if err != nil {
 			log.Print(err)
 			uiError = "Server error. Please try again later."
+			log.Print(uiError)
+
 			h.renderLogin(w, uiError)
 			return
 		}
 
 		if !match {
 			uiError = "Invalid credentials."
+			log.Print(uiError)
 			h.renderLogin(w, uiError)
 			return
 		}
@@ -145,9 +154,8 @@ func (h *uiHandler) PostLogin() http.HandlerFunc {
 		session.Save(r, w)
 
 		// TODO: Add logout functionality.
-
+		log.Print("auth'd")
 		http.Redirect(w, r, "/ui/dashboard", http.StatusTemporaryRedirect)
-
 	}
 }
 

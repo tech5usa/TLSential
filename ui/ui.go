@@ -55,7 +55,10 @@ func (h *uiHandler) Login() http.HandlerFunc {
 		}
 		head := headTemplate{"Login", "login.css"}
 		p := loginTemplate{head}
-		t.ExecuteTemplate(w, "login", p)
+		err = t.ExecuteTemplate(w, "login", p)
+		if err != nil {
+			log.Print(err.Error())
+		}
 	}
 }
 
@@ -131,6 +134,9 @@ func (h *uiHandler) Certificate() http.HandlerFunc {
 			head,
 			p,
 		}
-		t.ExecuteTemplate(w, "layout", l)
+		err = t.ExecuteTemplate(w, "layout", l)
+		if err != nil {
+			log.Print(err.Error())
+		}
 	}
 }

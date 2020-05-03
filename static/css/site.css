@@ -81,3 +81,11 @@ body {
   border-top-left-radius: 0;
   border-top-right-radius: 0;
 }
+.tls-navbar-dark {
+    min-height: 3.5rem;
+    background-color: #F2F2F2;
+    box-shadow: 0 0.5rem 1rem rgba(0,0,0,.05), inset 0 -1px 0 rgba(0,0,0,.1);
+    position: sticky !important;
+    top: 0;
+    z-index: 1071;
+}

@@ -5,19 +5,18 @@
 {{template "head" .Head}}
 
 <body>
-    <header class="navbar navbar-expand-lg flex-column flex-md-row navbar-dark urcs-navbar-dark">
-        <a class="navbar-brand ml-n2" href='#home' name="rates-link">
-            <img src="/static/images/tlsential_web_logo.svg" alt="TLSential" height="72">
+    <header class="navbar navbar-expand-lg flex-column flex-md-row navbar-dark tls-navbar-dark">
+        <a class="navbar-brand" href='#home'>
+            <img src="/static/images/tlsential_web_logo.svg" alt="TLSential" height="42">
         </a>
         <div class="collapse navbar-collapse" id="navbar">
-            <div class="navbar-nav" id="boq-navbar-links" style="display:none">
+            <div class="navbar-nav" id="boq-navbar-links">
                 <a class="nav-item nav-link" href="dashboard.html">Dashboard</a>
             </div>
         </div>
     </header>
-    <div class="container-fluid">
+    <div class="container">
         <main class="content" role="main">
-            <!--https://stackoverflow.com/questions/42747183/how-to-render-templates-to-multiple-layouts-in-go-->
             {{ template "content" }}
         </main>
     </div>

@@ -72,6 +72,7 @@ func (h *uiHandler) Dashboard() http.HandlerFunc {
 
 		// TODO: Fill out appropriate data for cert, renewed cert, and domain counts.
 		d := dashboardTemplate{head, 4, 20, 69}
+		t, _ = template.ParseFiles("layout.html", "dashboard.html")
 		t.ExecuteTemplate(w, "dashboard", d)
 	}
 }

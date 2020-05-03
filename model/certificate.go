@@ -60,6 +60,8 @@ type Certificate struct {
 
 	LastError error
 
+	ModTime time.Time
+
 	ACMEEmail        string
 	ACMERegistration *registration.Resource
 	ACMEKey          *ecdsa.PrivateKey

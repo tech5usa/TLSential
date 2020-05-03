@@ -61,6 +61,7 @@ type CertResp struct {
 	Issued        bool
 	LastError     string
 	ACMEEmail     string
+	ModTime       time.Time
 }
 
 // TODO: Add validation function to make sure domains are actual domains.
@@ -142,6 +143,7 @@ func (h *certHandler) GetAll() http.HandlerFunc {
 				Issued:        c.Issued,
 				LastError:     lastError,
 				ACMEEmail:     c.ACMEEmail,
+				ModTime:       c.ModTime,
 			}
 			crs = append(crs, cr)
 		}
@@ -200,6 +202,7 @@ func (h *certHandler) Get() http.HandlerFunc {
 			Issued:        c.Issued,
 			LastError:     lastError,
 			ACMEEmail:     c.ACMEEmail,
+			ModTime:       c.ModTime,
 		}
 
 		w.WriteHeader(http.StatusOK)
@@ -272,6 +275,7 @@ func (h *certHandler) Post() http.HandlerFunc {
 			Issued:        c.Issued,
 			LastError:     "",
 			ACMEEmail:     c.ACMEEmail,
+			ModTime:       c.ModTime,
 		}
 
 		w.WriteHeader(http.StatusCreated)
@@ -319,7 +323,7 @@ func (h *certHandler) GetCert() http.HandlerFunc {
 			return
 		}
 
-		modtime := time.Now()
+		modtime := c.ModTime
 		filename := fmt.Sprintf("%s%s", c.CommonName, CertFileExt)
 		cd := fmt.Sprintf("attachment; filename=%s", filename)
 
@@ -358,7 +362,7 @@ func (h *certHandler) GetIssuer() http.HandlerFunc {
 			return
 		}
 
-		modtime := time.Now()
+		modtime := c.ModTime
 		filename := fmt.Sprintf("%s%s", c.CommonName, IssuerCertFileExt)
 		cd := fmt.Sprintf("attachment; filename=%s", filename)
 
@@ -405,7 +409,7 @@ func (h *certHandler) GetPrivkey() http.HandlerFunc {
 			return
 		}
 
-		modtime := time.Now()
+		modtime := c.ModTime
 		filename := fmt.Sprintf("%s%s", c.CommonName, KeyFileExt)
 		cd := fmt.Sprintf("attachment; filename=%s", filename)
 

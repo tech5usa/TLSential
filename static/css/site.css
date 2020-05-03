@@ -88,4 +88,25 @@ body {
     position: sticky !important;
     top: 0;
     z-index: 1071;
+    color: #007bff;
+}
+
+.tls-page {
+    width: 100%;
+    padding: 15px;
+    background: white;
+    margin-top: 1rem;
+    border-radius: 4px; 
+    box-shadow: rgba(60, 66, 87, 0.12) 0px 7px 14px 0px, rgba(0, 0, 0, 0.12) 0px 3px 6px 0px; 
+    transform: translate3d(var(--auto-translate-x), var(--auto-translate-y), 0); 
+    transform-origin: 0% 0%; width: calc(100% * var(--auto-scale-x)); 
+    height: calc(100% * var(--auto-scale-y)); 
+    will-change: transform, width, height; 
+    box-sizing: border-box; 
+    /* position: absolute;  */
+}
+.tsl-title {
+    margin-top: 2rem;
+    margin-bottom: .5rem;
+    font-weight: 300;
 }

@@ -10,6 +10,7 @@ require (
 	github.com/go-acme/lego v2.7.2+incompatible
 	github.com/go-acme/lego/v3 v3.5.0
 	github.com/gorilla/mux v1.7.4
+	github.com/gorilla/sessions v1.2.0
 	github.com/mikespook/gorbac v2.1.0+incompatible
 	github.com/segmentio/ksuid v1.0.2
 	go.etcd.io/bbolt v1.3.4

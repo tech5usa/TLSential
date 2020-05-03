@@ -51,6 +51,8 @@ type encodedCert struct {
 
 	LastError string
 
+	ModTime time.Time
+
 	ACMEEmail        string
 	ACMERegistration *registration.Resource
 
@@ -119,6 +121,7 @@ func (cr *certRepository) AllCerts() ([]*model.Certificate, error) {
 			ACMEEmail:         ec.ACMEEmail,
 			ACMERegistration:  ec.ACMERegistration,
 			ACMEKey:           decode(ec.ACMEKey),
+			ModTime:           ec.ModTime,
 		}
 		certs = append(certs, c)
 	}
@@ -164,6 +167,7 @@ func (cr *certRepository) Cert(id string) (*model.Certificate, error) {
 		ACMEEmail:         ec.ACMEEmail,
 		ACMERegistration:  ec.ACMERegistration,
 		ACMEKey:           decode(ec.ACMEKey),
+		ModTime:           ec.ModTime,
 	}
 	return c, err
 }
@@ -174,6 +178,7 @@ func (cr *certRepository) SaveCert(c *model.Certificate) error {
 	if c.LastError != nil {
 		lastError = c.LastError.Error()
 	}
+	c.ModTime = time.Now()
 	ec := &encodedCert{
 		ID:                c.ID,
 		Secret:            c.Secret,
@@ -191,6 +196,7 @@ func (cr *certRepository) SaveCert(c *model.Certificate) error {
 		ACMEEmail:         c.ACMEEmail,
 		ACMERegistration:  c.ACMERegistration,
 		ACMEKey:           encode(c.ACMEKey),
+		ModTime:           c.ModTime,
 	}
 	err := cr.DB.Update(func(tx *bolt.Tx) error {
 		b := tx.Bucket(certBucket)

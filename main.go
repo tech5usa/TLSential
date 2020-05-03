@@ -27,7 +27,6 @@ func main() {
 	fmt.Println("///- Starting up TLSential")
 	fmt.Printf("//- Version %s\n", Version)
 
-	var email string
 	var port int
 	var dbFile string
 	var secretReset bool
@@ -37,7 +36,6 @@ func main() {
 	var noHTTPRedirect bool
 
 	// Grab any command line arguments
-	flag.StringVar(&email, "email", "test@example.com", "Email address for Let's Encrypt account")
 	flag.IntVar(&port, "port", 443, "port for webserver to run on")
 	flag.StringVar(&dbFile, "db", "tlsential.db", "filename for boltdb database")
 	flag.BoolVar(&secretReset, "secret-reset", false, "reset the JWT secret - invalidates all API sessions")
@@ -49,8 +47,9 @@ func main() {
 	flag.Parse()
 
 	// Open our database file.
-	db, err := bolt.Open(dbFile, 0666, nil)
+	db, err := bolt.Open(dbFile, 0666, &bolt.Options{Timeout: 1 * time.Second})
 	if err != nil {
+		log.Print("Bolt DB file lock timeout")
 		log.Fatal(err)
 	}
 	defer db.Close()
@@ -115,7 +114,6 @@ func main() {
 			ReadTimeout:  5 * time.Second,
 			WriteTimeout: 5 * time.Second,
 			IdleTimeout:  5 * time.Second,
-			// Addr:         ":8081",
 			Handler: http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
 				w.Header().Set("Connection", "close")
 				url := "https://" + req.Host + req.URL.String()

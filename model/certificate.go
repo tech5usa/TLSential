@@ -7,6 +7,7 @@ import (
 	"crypto/rand"
 	"errors"
 	"log"
+	"net/mail"
 	"time"
 
 	"github.com/ImageWare/TLSential/auth"
@@ -23,7 +24,7 @@ const CADirURL = "https://acme-v02.api.letsencrypt.org/directory"
 const DefaultRenewAt = 30
 
 var ErrInvalidDomains = errors.New("invalid domains")
-var ErrEmailRequired = errors.New("email required")
+var ErrInvalidEmail = errors.New("email required")
 
 type Certificate struct {
 	ID     string
@@ -80,9 +81,9 @@ func NewCertificate(domains []string, email string) (*Certificate, error) {
 	}
 	common := domains[0]
 
-	// TODO: Parse and determine if valid email address
-	if email == "" {
-		return nil, ErrEmailRequired
+	e, err := mail.ParseAddress(email)
+	if err != nil {
+		return nil, ErrInvalidEmail
 	}
 
 	privateKey, err := ecdsa.GenerateKey(elliptic.P256(), rand.Reader)
@@ -96,7 +97,7 @@ func NewCertificate(domains []string, email string) (*Certificate, error) {
 		Domains:    domains,
 		CommonName: common,
 		RenewAt:    DefaultRenewAt,
-		ACMEEmail:  email,
+		ACMEEmail:  e.Address,
 		ACMEKey:    privateKey,
 	}
 

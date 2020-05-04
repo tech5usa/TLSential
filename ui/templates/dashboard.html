@@ -1,38 +1,41 @@
-{{define "dashboard"}}
+{{define "content"}}
 
-{{template "head" .Head}}
 
-  <body>
+<h2 class="tsl-title">Dashboard</h2>
 
-    <div class="container">
-      <div class="py-5">
-          <img class="mb-4" src="/static/images/tlsential_web_logo.svg" alt="TLSential"
-          height="72">
-        <h2>Dashboard</h2>
-      </div>
-
-      <div class="row">
-
-        <div class="col-md-8 order-md-1">
-          <h4 class="mb-3">Stats</h4>
-          <form class="needs-validation" novalidate>
-            <div class="row">
-                <div class="col-md-6 mb-3">
-                  <label for="id">Total Certs:</label>
-                  {{.TotalCerts}}
-                </div>
-                <div class="col-md-6 mb-3">
-                    <label for="secret">Renewed Certs:</label>
-                    {{ .TotalRenewedCerts}}
-                  </div>
-                  <div class="col-md-6 mb-3">
-                    <label for="secret">Total Domains:</label>
-                    {{ .TotalDomains}}
-                  </div>
-            </div>
-            
+<div class="tls-page">
+  <div class="row">
+    <div class="col-12 order-md-1">
+      <div class="row border-bottom pb-1">
+        <div class="col-8">
+          <h4 class="mb-2 ">Stats</h4>
+        </div>
+        <div class="col-4">
+          <a class="float-right mt-1" href="certificates">View certificates</a>
         </div>
       </div>
-{{template "footer"}}
+      <form class="needs-validation pt-2" novalidate>
+        <div class="row">
+          <div class="col-md-6 col-12 mb-3">
+            <div title="Total certificates" data-toggle="tooltip" data-placement="bottom">
+              <label for="TotalCerts" class="text-muted">Certificates</label>
+              <txt>{{ .TotalCerts}}</txt>
+            </div>
+          </div>
+          <div class="col-md-6 col-12 mb-3">
+            <div title="Total renewed certificates" data-toggle="tooltip" data-placement="bottom">
+              <label for="TotalRenewedCerts" class="text-muted float-right">Renewed certificates</label>
+              <txt class="float-right">{{ .TotalRenewedCerts}}</txt>
+            </div>
+          </div>
+          <div class="col-md-6 col-12 mb-3">
+            <div title="Total domains" data-toggle="tooltip" data-placement="bottom">
+              <label for="TotalDomains" class="text-muted">Domains</label>
+              <txt>{{ .TotalDomains}}</txt>
+            </div>
+          </div>
+        </div>
 
-{{end}}
+    </div>
+  </div>
+  {{end}}

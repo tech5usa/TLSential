@@ -33,6 +33,7 @@ func main() {
 	var port int
 	var dbFile string
 	var secretReset bool
+	var sessionReset bool
 	var tlsCert string
 	var tlsKey string
 	var noHTTPS bool
@@ -42,6 +43,7 @@ func main() {
 	flag.IntVar(&port, "port", 443, "port for webserver to run on")
 	flag.StringVar(&dbFile, "db", "tlsential.db", "filename for boltdb database")
 	flag.BoolVar(&secretReset, "secret-reset", false, "reset the JWT secret - invalidates all API sessions")
+	flag.BoolVar(&secretReset, "session-reset", false, "reset the Session secret - invalidates all Web sessions")
 	flag.StringVar(&tlsCert, "tls-cert", "/etc/pki/tlsential.crt", "file path for tls certificate")
 	flag.StringVar(&tlsKey, "tls-key", "/etc/pki/tlsential.key", "file path for tls private key")
 	flag.BoolVar(&noHTTPS, "no-https", false, "flag to run over http (HIGHLY INSECURE)")
@@ -60,8 +62,11 @@ func main() {
 	if secretReset {
 		resetSecret(db)
 	}
-
 	initSecret(db)
+
+	if sessionReset {
+		resetSessionKey(db)
+	}
 
 	// Start a goroutine to automatically renew certificates in the DB.
 	cs := newCertService(db)
@@ -147,8 +152,8 @@ func removeTrailingSlash(next http.Handler) http.Handler {
 // NewMux returns a new http.ServeMux with established routes.
 func NewMux(db *bolt.DB) *http.ServeMux {
 	apiHandler := newAPIHandler(db)
-	cs := newCertService(db)
-	uiHandler := ui.NewHandler("TLSential", cs)
+
+	uiHandler := newUIHandler(db)
 
 	s := http.NewServeMux()
 	s.Handle("/ui/", uiHandler.Route())
@@ -187,6 +192,27 @@ func initSecret(db *bolt.DB) {
 	}
 }
 
+func initSessionKey(db *bolt.DB) {
+	crepo, err := boltdb.NewConfigRepository(db)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	s, err := crepo.SessionKey()
+	if err != nil {
+		log.Fatal(err)
+	}
+	if len(s) < 32 {
+		c := 32
+		b := make([]byte, c)
+		_, err := rand.Read(b)
+		if err != nil {
+			log.Fatal(err)
+		}
+		crepo.SetSessionKey(b)
+	}
+}
+
 func resetSecret(db *bolt.DB) {
 	crepo, err := boltdb.NewConfigRepository(db)
 	if err != nil {
@@ -194,6 +220,18 @@ func resetSecret(db *bolt.DB) {
 	}
 
 	err = crepo.SetJWTSecret(nil)
+	if err != nil {
+		log.Fatal(err)
+	}
+}
+
+func resetSessionKey(db *bolt.DB) {
+	crepo, err := boltdb.NewConfigRepository(db)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	err = crepo.SetSessionKey(nil)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -229,6 +267,38 @@ func newAPIHandler(db *bolt.DB) api.Handler {
 	as := service.NewAcmeService(crs, chs)
 
 	return api.NewHandler(Version, us, cs, chs, crs, as)
+}
+
+// newUIHandler takes a bolt.DB and builds all necessary repos and usescases
+// for this app.
+func newUIHandler(db *bolt.DB) ui.Handler {
+	urepo, err := boltdb.NewUserRepository(db)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	crepo, err := boltdb.NewConfigRepository(db)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	chrepo, err := boltdb.NewChallengeConfigRepository(db)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	certrepo, err := boltdb.NewCertificateRepository(db)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	us := service.NewUserService(urepo)
+	cs := service.NewConfigService(crepo, us)
+	chs := service.NewChallengeConfigService(chrepo)
+	crs := service.NewCertificateService(certrepo)
+	as := service.NewAcmeService(crs, chs)
+
+	return ui.NewHandler(Version, us, cs, chs, crs, as)
 }
 
 // helper for creating an ACME Service from a db.

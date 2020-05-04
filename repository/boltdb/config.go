@@ -13,6 +13,7 @@ const (
 
 	jwtSecretKey  = "jwtsecret"
 	superAdminKey = "superadmin"
+	sessionKeyKey = "sessionkey"
 )
 
 var configBuckets = []string{
@@ -80,6 +81,32 @@ func (r *configRepository) SetSuperAdmin(name string) error {
 	err := r.DB.Update(func(tx *bolt.Tx) error {
 		b := tx.Bucket([]byte(configBucket))
 		b.Put([]byte(superAdminKey), []byte(name))
+		return nil
+	})
+	return err
+}
+
+// JWTSecret returns the currently stored JWT signing secret from boltdb.
+func (r *configRepository) SessionKey() ([]byte, error) {
+	var key []byte
+	err := r.DB.View(func(tx *bolt.Tx) error {
+		b := tx.Bucket([]byte(configBucket))
+		v := b.Get([]byte(sessionKeyKey))
+
+		buf := make([]byte, len(v))
+		copy(buf, v)
+		key = buf
+
+		return nil
+	})
+	return key, err
+}
+
+// SetSessionKey stores the given secret in boltdb.
+func (r *configRepository) SetSessionKey(key []byte) error {
+	err := r.DB.Update(func(tx *bolt.Tx) error {
+		b := tx.Bucket([]byte(configBucket))
+		b.Put([]byte(sessionKeyKey), key)
 		return nil
 	})
 	return err

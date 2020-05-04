@@ -1,5 +1,5 @@
 {{define "footer"}}
-<footer class="my-5 pt-5 text-muted text-center text-small">
+<footer class="my-5 pt-5 text-muted text-center text-small border-top">
     <p class="mb-1">&copy; ImageWare Systems Inc. 2020</p>
     <ul class="list-inline">
       <li class="list-inline-item"><a href="#">Privacy</a></li>
@@ -22,6 +22,8 @@
   (function() {
     'use strict';
 
+    $('[data-toggle="tooltip"]').tooltip();
+
     window.addEventListener('load', function() {
       // Fetch all the forms we want to apply custom Bootstrap validation styles to
       var forms = document.getElementsByClassName('needs-validation');
@@ -39,6 +41,4 @@
     }, false);
   })();
 </script>
-</body>
-</html>
 {{end}}

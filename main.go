@@ -26,6 +26,8 @@ const Version = "v0.0.1"
 
 const localStaticDir = "./static"
 
+type middleware func(http.Handler) http.Handler
+
 func main() {
 	fmt.Println("///- Starting up TLSential")
 	fmt.Printf("//- Version %s\n", Version)
@@ -37,6 +39,7 @@ func main() {
 	var tlsKey string
 	var noHTTPS bool
 	var noHTTPRedirect bool
+	var debug bool
 
 	// Grab any command line arguments
 	flag.IntVar(&port, "port", 443, "port for webserver to run on")
@@ -46,6 +49,7 @@ func main() {
 	flag.StringVar(&tlsKey, "tls-key", "/etc/pki/tlsential.key", "file path for tls private key")
 	flag.BoolVar(&noHTTPS, "no-https", false, "flag to run over http (HIGHLY INSECURE)")
 	flag.BoolVar(&noHTTPRedirect, "no-http-redirect", false, "flag to not redirect HTTP requests to HTTPS")
+	flag.BoolVar(&debug, "debug", false, "flag to increase logging")
 
 	flag.Parse()
 
@@ -70,7 +74,13 @@ func main() {
 
 	// Run http server concurrently
 	// Load routes for the server
-	mux := NewMux(db)
+	var mux http.Handler = NewMux(db)
+
+	if debug {
+		//For now the only middleware that debug adds is basic request logging.
+		//But there may be more we want to chain in the future.
+		mux = chainMiddleware(mux, requestLoggingMiddleWare)
+	}
 
 	tlsConfig := &tls.Config{
 		// Causes servers to use Go's default ciphersuite preferences,
@@ -102,7 +112,7 @@ func main() {
 		WriteTimeout: 10 * time.Second,
 		IdleTimeout:  120 * time.Second,
 		Addr:         fmt.Sprintf(":%d", port),
-		Handler:      removeTrailingSlash(mux),
+		Handler:      chainMiddleware(mux, removeTrailingSlash),
 		TLSConfig:    tlsConfig,
 	}
 
@@ -117,11 +127,11 @@ func main() {
 			ReadTimeout:  5 * time.Second,
 			WriteTimeout: 5 * time.Second,
 			IdleTimeout:  5 * time.Second,
-			Handler: http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
+			Handler: chainMiddleware(http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
 				w.Header().Set("Connection", "close")
 				url := "https://" + req.Host + req.URL.String()
 				http.Redirect(w, req, url, http.StatusMovedPermanently)
-			}),
+			}), removeTrailingSlash),
 		}
 
 		if !noHTTPRedirect {
@@ -131,6 +141,24 @@ func main() {
 		log.Fatal(s.ListenAndServeTLS(tlsCert, tlsKey))
 	}
 
+}
+
+func chainMiddleware(handler http.Handler, middlewares ...middleware) http.Handler {
+	for _, m := range middlewares {
+		handler = m(handler)
+	}
+	return handler
+}
+
+func requestLoggingMiddleWare(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		start := time.Now()
+
+		//Defer in case one of the handlers down the line calls panic
+		defer func() { log.Println(r.Method, r.URL.Path, time.Since(start)) }()
+
+		next.ServeHTTP(w, r)
+	})
 }
 
 // removeTrailingSlash removes any final / off the end of routes, otherwise

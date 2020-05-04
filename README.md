@@ -13,8 +13,7 @@ You can run it with the default settings by just executing ./TLSential from the 
 
 # Contributors
 
-Lead Developer - [d1str0](https://github.com/d1str0)
-
-Development - [debus](https://github.com/debus)
-UI Design - [domshyra](https://github.com/domshyra)
-Graphic Design - [brooks42](https://github.com/brooks42)
+* Lead Developer - [d1str0](https://github.com/d1str0)
+* Developer - [debus](https://github.com/debus)
+* UI Designer - [domshyra](https://github.com/domshyra)
+* Graphic Designer - [brooks42](https://github.com/brooks42)

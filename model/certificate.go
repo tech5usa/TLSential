@@ -22,8 +22,6 @@ import (
 
 const CADirURL = "https://acme-v02.api.letsencrypt.org/directory"
 
-const domainRegex = `^(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z0-9][a-z0-9-]{0,61}[a-z0-9]$`
-
 // DefaultRenewAt is the number of days before expiration a cert should be
 // renewed at.
 const DefaultRenewAt = 30

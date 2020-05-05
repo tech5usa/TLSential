@@ -8,7 +8,10 @@ import (
 	"errors"
 	"log"
 	"net/mail"
+	"net/url"
 	"time"
+
+	"golang.org/x/net/idna"
 
 	"github.com/ImageWare/TLSential/auth"
 	"github.com/go-acme/lego/v3/certcrypto"
@@ -75,10 +78,15 @@ func NewCertificate(domains []string, email string) (*Certificate, error) {
 	id := ksuid.New().String()
 	secret := auth.NewPassword()
 
-	// TODO: Actually parse these to determine if valid domains
 	if len(domains) == 0 {
 		return nil, ErrInvalidDomains
 	}
+
+	// Validate domains in list
+	if !ValidDomains(domains) {
+		return nil, ErrInvalidDomains
+	}
+
 	common := domains[0]
 
 	e, err := mail.ParseAddress(email)
@@ -111,6 +119,7 @@ func NewCertificate(domains []string, email string) (*Certificate, error) {
 		return nil, err
 	}
 
+	// TODO: Move this to acme Service so we can mock here
 	reg, err := client.Registration.Register(registration.RegisterOptions{TermsOfServiceAgreed: true})
 	if err != nil {
 		return nil, err
@@ -133,4 +142,33 @@ func (c *Certificate) GetRegistration() *registration.Resource {
 // GetPrivateKey is needed to implement the User interface for Lego Clients.
 func (c *Certificate) GetPrivateKey() crypto.PrivateKey {
 	return c.ACMEKey
+}
+
+// ValidDomains is used to validate that the passed domains set includes only
+// valid domains (ie example.com or *.example.com). Returns bool designating
+// whether or not they are ALL valid domains.
+func ValidDomains(domains []string) bool {
+
+	var domainValidator = idna.New(idna.MapForLookup(), idna.StrictDomainName(false))
+
+	// iterate through each domain and validate it, if any of them fail we fail the
+	// function with the appropriate error
+	for _, domain := range domains {
+
+		url, _ := url.Parse(domain)
+
+		// schemes are disallowed, this just checks if the domain is a valid URL
+		// and if so if it's got a non-empty scheme
+		if url != nil && len(url.Scheme) != 0 {
+			return false
+		}
+
+		_, err := domainValidator.ToASCII(domain)
+
+		if err != nil {
+			return false
+		}
+	}
+
+	return true
 }

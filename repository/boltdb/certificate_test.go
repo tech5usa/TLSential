@@ -12,6 +12,8 @@ func TestCertificate(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+	defer db.Close()
+
 	r, err := NewCertificateRepository(db)
 	if err != nil {
 		t.Fatal(err)

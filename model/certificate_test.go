@@ -32,6 +32,18 @@ func TestNewCertificate(t *testing.T) {
 			"test@example.com",
 			"acme: error: 400 :: POST :: https://acme-v02.api.letsencrypt.org/acme/new-acct :: urn:ietf:params:acme:error:invalidEmail :: Error creating new account :: invalid contact domain. Contact emails @example.com are forbidden, url: ",
 		},
+		{
+			"wildcard domain",
+			[]string{"*.google.com"},
+			"test@notexample.com",
+			"",
+		},
+		{
+			"bad wildcard domain",
+			[]string{"https://*.google.com"},
+			"test@notexample.com",
+			ErrInvalidDomains.Error(),
+		},
 	}
 
 	for _, ct := range certTests {

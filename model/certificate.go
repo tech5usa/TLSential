@@ -8,7 +8,10 @@ import (
 	"errors"
 	"log"
 	"net/mail"
+	"net/url"
 	"time"
+
+	"golang.org/x/net/idna"
 
 	"github.com/ImageWare/TLSential/auth"
 	"github.com/go-acme/lego/v3/certcrypto"
@@ -18,6 +21,8 @@ import (
 )
 
 const CADirURL = "https://acme-v02.api.letsencrypt.org/directory"
+
+const domainRegex = `^(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z0-9][a-z0-9-]{0,61}[a-z0-9]$`
 
 // DefaultRenewAt is the number of days before expiration a cert should be
 // renewed at.
@@ -79,6 +84,26 @@ func NewCertificate(domains []string, email string) (*Certificate, error) {
 	if len(domains) == 0 {
 		return nil, ErrInvalidDomains
 	}
+
+	var domainValidator = idna.New(idna.ValidateForRegistration())
+
+	// iterate through each domain and check against the regex from https://stackoverflow.com/a/30007882
+	for _, domain := range domains {
+
+		url, _ := url.Parse(domain)
+
+		// schemes are disallowed, this just checks
+		if url != nil && len(url.Scheme) != 0 {
+			return nil, ErrInvalidDomains
+		}
+
+		_, err := domainValidator.ToUnicode(domain)
+
+		if err != nil {
+			return nil, ErrInvalidDomains
+		}
+	}
+
 	common := domains[0]
 
 	e, err := mail.ParseAddress(email)

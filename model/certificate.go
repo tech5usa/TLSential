@@ -78,29 +78,14 @@ func NewCertificate(domains []string, email string) (*Certificate, error) {
 	id := ksuid.New().String()
 	secret := auth.NewPassword()
 
-	// TODO: Actually parse these to determine if valid domains
 	if len(domains) == 0 {
 		return nil, ErrInvalidDomains
 	}
 
-	var domainValidator = idna.New(idna.ValidateForRegistration())
+	domainsValidated := containsOnlyValidDomains(domains)
 
-	// iterate through each domain and validate it, if any of them fail we fail the
-	// function with the appropriate error
-	for _, domain := range domains {
-
-		url, _ := url.Parse(domain)
-
-		// schemes are disallowed, this just checks
-		if url != nil && len(url.Scheme) != 0 {
-			return nil, ErrInvalidDomains
-		}
-
-		_, err := domainValidator.ToUnicode(domain)
-
-		if err != nil {
-			return nil, ErrInvalidDomains
-		}
+	if !domainsValidated {
+		return nil, ErrInvalidDomains
 	}
 
 	common := domains[0]
@@ -157,4 +142,32 @@ func (c *Certificate) GetRegistration() *registration.Resource {
 // GetPrivateKey is needed to implement the User interface for Lego Clients.
 func (c *Certificate) GetPrivateKey() crypto.PrivateKey {
 	return c.ACMEKey
+}
+
+// validateDomains is used to validate that the passed domains set includes only
+// valid domains (ie example.com or *.example.com)
+func containsOnlyValidDomains(domains []string) bool {
+
+	var domainValidator = idna.New(idna.MapForLookup(), idna.StrictDomainName(false))
+
+	// iterate through each domain and validate it, if any of them fail we fail the
+	// function with the appropriate error
+	for _, domain := range domains {
+
+		url, _ := url.Parse(domain)
+
+		// schemes are disallowed, this just checks if the domain is a valid URL
+		// // and if so if it's got a non-empty scheme
+		if url != nil && len(url.Scheme) != 0 {
+			return false
+		}
+
+		_, err := domainValidator.ToASCII(domain)
+
+		if err != nil {
+			return false
+		}
+	}
+
+	return true
 }

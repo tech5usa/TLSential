@@ -34,13 +34,13 @@ func TestNewCertificate(t *testing.T) {
 		},
 		{
 			"wildcard domain",
-			[]string{"*.google.com"},
+			[]string{"*.example.com"},
 			"test@notexample.com",
 			"",
 		},
 		{
 			"bad wildcard domain",
-			[]string{"https://*.google.com"},
+			[]string{"https://*.example.com"},
 			"test@notexample.com",
 			ErrInvalidDomains.Error(),
 		},
@@ -130,6 +130,45 @@ func TestNewCertificate(t *testing.T) {
 				t.Error("acme key should not be nil")
 			}
 		})
+	}
+}
+
+func TestContainsOnlyValidDomains(t *testing.T) {
+
+	// happy path
+	domains := []string{"example.com", "example2.com"}
+
+	if !containsOnlyValidDomains(domains) {
+		t.Error("example.com should be a valid domain")
+	}
+
+	// schemes are unacceptable
+	domains = []string{"https://example.com"}
+
+	if containsOnlyValidDomains(domains) {
+		t.Error("schemes are invalid domain names for us")
+	}
+
+	// good wildcard
+	domains = []string{"*.example.com"}
+
+	if !containsOnlyValidDomains(domains) {
+		t.Error("Wildcard domains are valid")
+	}
+
+	// schemes and wildcards are just out entirely
+	domains = []string{"https://*.example.com"}
+
+	if containsOnlyValidDomains(domains) {
+		t.Error("schemes and wildcards are invalid domain names for us")
+	}
+
+	// several checks with a failure just at the end
+	domains = []string{"www.domain.com", "tests.goodstuff", "example.example",
+		"*.wildcarddomainz.com", "https://abaddomainnameexamplebecauseithasaschemeinit.com"}
+
+	if containsOnlyValidDomains(domains) {
+		t.Error("the last item was definitely bad but it was accepted anyway")
 	}
 }
 

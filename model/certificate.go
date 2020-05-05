@@ -85,7 +85,8 @@ func NewCertificate(domains []string, email string) (*Certificate, error) {
 
 	var domainValidator = idna.New(idna.ValidateForRegistration())
 
-	// iterate through each domain and check against the regex from https://stackoverflow.com/a/30007882
+	// iterate through each domain and validate it, if any of them fail we fail the
+	// function with the appropriate error
 	for _, domain := range domains {
 
 		url, _ := url.Parse(domain)

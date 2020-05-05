@@ -82,9 +82,8 @@ func NewCertificate(domains []string, email string) (*Certificate, error) {
 		return nil, ErrInvalidDomains
 	}
 
-	domainsValidated := containsOnlyValidDomains(domains)
-
-	if !domainsValidated {
+	// Validate domains in list
+	if !ValidDomains(domains) {
 		return nil, ErrInvalidDomains
 	}
 
@@ -120,6 +119,7 @@ func NewCertificate(domains []string, email string) (*Certificate, error) {
 		return nil, err
 	}
 
+	// TODO: Move this to acme Service so we can mock here
 	reg, err := client.Registration.Register(registration.RegisterOptions{TermsOfServiceAgreed: true})
 	if err != nil {
 		return nil, err
@@ -144,9 +144,10 @@ func (c *Certificate) GetPrivateKey() crypto.PrivateKey {
 	return c.ACMEKey
 }
 
-// validateDomains is used to validate that the passed domains set includes only
-// valid domains (ie example.com or *.example.com)
-func containsOnlyValidDomains(domains []string) bool {
+// ValidDomains is used to validate that the passed domains set includes only
+// valid domains (ie example.com or *.example.com). Returns bool designating
+// whether or not they are ALL valid domains.
+func ValidDomains(domains []string) bool {
 
 	var domainValidator = idna.New(idna.MapForLookup(), idna.StrictDomainName(false))
 
@@ -157,7 +158,7 @@ func containsOnlyValidDomains(domains []string) bool {
 		url, _ := url.Parse(domain)
 
 		// schemes are disallowed, this just checks if the domain is a valid URL
-		// // and if so if it's got a non-empty scheme
+		// and if so if it's got a non-empty scheme
 		if url != nil && len(url.Scheme) != 0 {
 			return false
 		}

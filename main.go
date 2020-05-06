@@ -79,7 +79,14 @@ func main() {
 
 	// Run http server concurrently
 	// Load routes for the server
-	var mux http.Handler = NewMux(db)
+	var mux http.Handler
+
+	// Allow for CSRF to "pass" even over non-https. Hence, unsafe.
+	if noHTTPS {
+		mux = NewMux(true, db)
+	} else {
+		mux = NewMux(false, db)
+	}
 
 	if debug {
 		//For now the only middleware that debug adds is basic request logging.
@@ -178,13 +185,12 @@ func removeTrailingSlash(next http.Handler) http.Handler {
 }
 
 // NewMux returns a new http.ServeMux with established routes.
-func NewMux(db *bolt.DB) *http.ServeMux {
+func NewMux(unsafe bool, db *bolt.DB) *http.ServeMux {
 	apiHandler := newAPIHandler(db)
-
 	uiHandler := newUIHandler(db)
 
 	s := http.NewServeMux()
-	s.Handle("/ui/", uiHandler.Route())
+	s.Handle("/ui/", uiHandler.Route(unsafe))
 
 	s.Handle("/api/", apiHandler.Route())
 

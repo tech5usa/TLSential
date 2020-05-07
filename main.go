@@ -79,7 +79,11 @@ func main() {
 
 	// Run http server concurrently
 	// Load routes for the server
-	var mux http.Handler = NewMux(db)
+	var mux http.Handler
+
+	// Pass bool for HTTPS as it specifically needs to be disabled in CSRF
+	// protection if no HTTPS.
+	mux = NewMux(noHTTPS, db)
 
 	if debug {
 		//For now the only middleware that debug adds is basic request logging.
@@ -87,6 +91,7 @@ func main() {
 		mux = chainMiddleware(mux, requestLoggingMiddleWare)
 	}
 
+	// Thanks Filippo
 	tlsConfig := &tls.Config{
 		// Causes servers to use Go's default ciphersuite preferences,
 		// which are tuned to avoid attacks. Does nothing on clients.
@@ -94,14 +99,14 @@ func main() {
 		// Only use curves which have assembly implementations
 		CurvePreferences: []tls.CurveID{
 			tls.CurveP256,
-			tls.X25519, // Go 1.8 only
+			tls.X25519, // Go 1.8+ only
 		},
 		MinVersion: tls.VersionTLS12,
 		CipherSuites: []uint16{
 			tls.TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384,
 			tls.TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384,
-			tls.TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305, // Go 1.8 only
-			tls.TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305,   // Go 1.8 only
+			tls.TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305, // Go 1.8+ only
+			tls.TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305,   // Go 1.8+ only
 			tls.TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256,
 			tls.TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,
 
@@ -178,13 +183,12 @@ func removeTrailingSlash(next http.Handler) http.Handler {
 }
 
 // NewMux returns a new http.ServeMux with established routes.
-func NewMux(db *bolt.DB) *http.ServeMux {
+func NewMux(unsafe bool, db *bolt.DB) *http.ServeMux {
 	apiHandler := newAPIHandler(db)
-
 	uiHandler := newUIHandler(db)
 
 	s := http.NewServeMux()
-	s.Handle("/ui/", uiHandler.Route())
+	s.Handle("/ui/", uiHandler.Route(unsafe))
 
 	s.Handle("/api/", apiHandler.Route())
 

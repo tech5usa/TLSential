@@ -50,20 +50,13 @@ func (h *uiHandler) Route(unsafe bool) http.Handler {
 	}
 
 	var CSRF func(http.Handler) http.Handler
-	if unsafe {
-		CSRF = csrf.Protect(
-			key,
-			csrf.SameSite(csrf.SameSiteStrictMode),
-			csrf.FieldName("csrf_token"),
-			csrf.Secure(false),
-		)
-	} else {
-		CSRF = csrf.Protect(
-			key,
-			csrf.SameSite(csrf.SameSiteStrictMode),
-			csrf.FieldName("csrf_token"),
-		)
-	}
+
+	CSRF = csrf.Protect(
+		key,
+		csrf.SameSite(csrf.SameSiteStrictMode),
+		csrf.FieldName("csrf_token"),
+		csrf.Secure(!unsafe), // If unsafe, we pass in FALSE for secure.
+	)
 
 	r := mux.NewRouter()
 	r.HandleFunc("/ui/dashboard", h.Authenticated(h.Dashboard()))

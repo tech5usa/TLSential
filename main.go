@@ -81,12 +81,9 @@ func main() {
 	// Load routes for the server
 	var mux http.Handler
 
-	// Allow for CSRF to "pass" even over non-https. Hence, unsafe.
-	if noHTTPS {
-		mux = NewMux(true, db)
-	} else {
-		mux = NewMux(false, db)
-	}
+	// Pass bool for HTTPS as it specifically needs to be disabled in CSRF
+	// protection if no HTTPS.
+	mux = NewMux(noHTTPS, db)
 
 	if debug {
 		//For now the only middleware that debug adds is basic request logging.
@@ -94,6 +91,7 @@ func main() {
 		mux = chainMiddleware(mux, requestLoggingMiddleWare)
 	}
 
+	// Thanks Filippo
 	tlsConfig := &tls.Config{
 		// Causes servers to use Go's default ciphersuite preferences,
 		// which are tuned to avoid attacks. Does nothing on clients.
@@ -101,14 +99,14 @@ func main() {
 		// Only use curves which have assembly implementations
 		CurvePreferences: []tls.CurveID{
 			tls.CurveP256,
-			tls.X25519, // Go 1.8 only
+			tls.X25519, // Go 1.8+ only
 		},
 		MinVersion: tls.VersionTLS12,
 		CipherSuites: []uint16{
 			tls.TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384,
 			tls.TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384,
-			tls.TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305, // Go 1.8 only
-			tls.TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305,   // Go 1.8 only
+			tls.TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305, // Go 1.8+ only
+			tls.TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305,   // Go 1.8+ only
 			tls.TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256,
 			tls.TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,
 

@@ -160,12 +160,22 @@ func chainMiddleware(handler http.Handler, middlewares ...middleware) http.Handl
 	return handler
 }
 
+func getIP(r *http.Request) string {
+	addr := r.Header.Get("X-FORWARDED-FOR")
+	if addr == "" {
+		addr = r.RemoteAddr
+	}
+	return addr
+}
+
 func requestLoggingMiddleWare(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		start := time.Now()
 
 		//Defer in case one of the handlers down the line calls panic
-		defer func() { log.Println(r.Method, r.URL.Path, time.Since(start)) }()
+		defer func() {
+			log.Println(getIP(r), r.Method, r.URL.Path, time.Since(start))
+		}()
 
 		next.ServeHTTP(w, r)
 	})

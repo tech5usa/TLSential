@@ -1,0 +1,8 @@
+{{define "content"}}
+<ul>
+{{ range .Certs }}
+<li><a href="/ui/cert/{{ .ID }}">{{.ID}} - {{.CommonName}}</a></li>
+
+{{end}}
+</ul>
+{{end}}

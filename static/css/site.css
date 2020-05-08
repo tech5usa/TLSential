@@ -56,7 +56,6 @@ body {
   will-change: transform, width, height; 
   box-sizing: border-box; 
   position: absolute; 
-  pointer-events: none;
 }
 .form-signin .checkbox {
   font-weight: 400;

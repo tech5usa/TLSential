@@ -260,7 +260,7 @@ func (h *certHandler) Post() http.HandlerFunc {
 			return
 		}
 
-		go func() { service.CertIssueChan <- c.ID }()
+		service.CertIssueChan <- c.ID
 
 		// Build a response obj to return, specifically leaving out
 		// Keys and Certs
@@ -456,7 +456,7 @@ func (h *certHandler) Renew() http.HandlerFunc {
 			return
 		}
 
-		go func() { service.CertAutoRenewChan <- c.ID }()
+		service.CertAutoRenewChan <- c.ID
 
 		w.WriteHeader(http.StatusAccepted)
 	}

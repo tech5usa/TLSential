@@ -52,9 +52,7 @@ func (h *uiHandler) Route(unsafe bool) http.Handler {
 		log.Fatal(err.Error())
 	}
 
-	var CSRF func(http.Handler) http.Handler
-
-	CSRF = csrf.Protect(
+	CSRF := csrf.Protect(
 		key,
 		csrf.SameSite(csrf.SameSiteStrictMode),
 		csrf.FieldName("csrf_token"),
@@ -64,6 +62,8 @@ func (h *uiHandler) Route(unsafe bool) http.Handler {
 	r := mux.NewRouter()
 	r.HandleFunc("/ui/dashboard", h.Authenticated(h.Dashboard()))
 	r.HandleFunc("/ui/cert/{id}", h.Authenticated(h.Certificate()))
+	r.HandleFunc("/ui/cert", h.Authenticated(h.ListCertificates()))
+
 	r.HandleFunc("/ui/login", h.GetLogin()).Methods("GET")
 	r.HandleFunc("/ui/login", h.PostLogin()).Methods("POST")
 	r.HandleFunc("/ui/logout", h.Logout()).Methods("POST")
@@ -231,18 +231,18 @@ func (h *uiHandler) Dashboard() http.HandlerFunc {
 	}
 }
 
-type certTemplate struct {
+type editCertTemplate struct {
 	Cert *model.Certificate
 }
 
-// Serve /ui/certificate page.
+// Serve /ui/cert/{id} page.
 func (h *uiHandler) Certificate() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		files := []string{
 			"ui/templates/layout.html",
 			"ui/templates/head.html",
 			"ui/templates/footer.html",
-			"ui/templates/certificate.html",
+			"ui/templates/edit_certificate.html",
 		}
 		t, err := template.ParseFiles(files...)
 		if err != nil {
@@ -265,7 +265,7 @@ func (h *uiHandler) Certificate() http.HandlerFunc {
 			h.mix("/css/site.css"),
 			h.mix("/js/site.js"),
 		}
-		p := certTemplate{
+		p := editCertTemplate{
 			cert,
 		}
 		l := layoutTemplate{
@@ -309,4 +309,52 @@ func (h *uiHandler) mix(asset string) string {
 
 	// Otherwise prepend the static directory
 	return "/static" + asset
+}
+
+type certListTemplate struct {
+	Certs []*model.Certificate
+}
+
+// Serve /ui/cert page.
+func (h *uiHandler) ListCertificates() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		files := []string{
+			"ui/templates/layout.html",
+			"ui/templates/head.html",
+			"ui/templates/footer.html",
+			"ui/templates/certificates.html",
+		}
+		t, err := template.ParseFiles(files...)
+		if err != nil {
+			log.Print(err.Error())
+			http.Error(w, "uh oh", http.StatusInternalServerError)
+			return
+		}
+
+		certs, err := h.certificateService.AllCerts()
+		if err != nil {
+			log.Print(err.Error())
+			http.Error(w, "yikes", http.StatusInternalServerError)
+			return
+		}
+
+		head := headTemplate{
+			"Certificates",
+			h.mix("/css/site.css"),
+			h.mix("/js/site.js"),
+		}
+
+		p := certListTemplate{
+			certs,
+		}
+		l := layoutTemplate{
+			head,
+			p,
+			csrf.TemplateField(r),
+		}
+		err = t.ExecuteTemplate(w, "layout", l)
+		if err != nil {
+			log.Print(err.Error())
+		}
+	}
 }

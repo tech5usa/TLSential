@@ -14,10 +14,6 @@ var scanPeriod = time.Hour
 
 func autoRenewal(cs certificate.Service, as acme.Service) {
 	for {
-		// TODO: Have API calls trigger a channel so all renews/issues funnel to
-		// here.
-		// Selecet not currently needed as there is only one case, but in the
-		// future with a channel, we will want the select.
 		select {
 		case <-time.After(scanPeriod):
 			log.Print("Scanning all certs for renewal...")

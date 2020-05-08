@@ -6,6 +6,7 @@ import (
 
 	"github.com/ImageWare/TLSential/acme"
 	"github.com/ImageWare/TLSential/certificate"
+	"github.com/ImageWare/TLSential/service"
 )
 
 // How often to scan all certificates to determine if they'll need renewal.
@@ -33,6 +34,24 @@ func autoRenewal(cs certificate.Service, as acme.Service) {
 					as.Renew(c)
 				}
 			}
+
+		case id := <-service.CertAutoRenewChan:
+			c, err := cs.Cert(id)
+
+			if err != nil {
+				log.Printf("main: autoRenewal: error with triggered autorenew of cert '%s': %s", id, err.Error())
+				break
+			}
+
+			if c == nil {
+				log.Printf("main: autoRenewal: told to renew cert '%s' which doesn't exist", id)
+				break
+			}
+
+			as.Renew(c)
+
+		case id := <-service.CertIssueChan:
+			as.Trigger(id)
 		}
 	}
 }

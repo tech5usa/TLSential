@@ -13,6 +13,9 @@ import (
 	"github.com/go-acme/lego/v3/lego"
 )
 
+var CertAutoRenewChan = make(chan string)
+var CertIssueChan = make(chan string)
+
 type acmeService struct {
 	certService  cert.Service
 	challService challenge_config.Service

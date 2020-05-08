@@ -11,6 +11,7 @@ import (
 	"github.com/ImageWare/TLSential/acme"
 	"github.com/ImageWare/TLSential/certificate"
 	"github.com/ImageWare/TLSential/model"
+	"github.com/ImageWare/TLSential/service"
 
 	"github.com/gorilla/mux"
 )
@@ -259,7 +260,7 @@ func (h *certHandler) Post() http.HandlerFunc {
 			return
 		}
 
-		go h.acme.Trigger(c.ID)
+		go func() { service.CertIssueChan <- c.ID }()
 
 		// Build a response obj to return, specifically leaving out
 		// Keys and Certs
@@ -455,7 +456,7 @@ func (h *certHandler) Renew() http.HandlerFunc {
 			return
 		}
 
-		go h.acme.Renew(c)
+		go func() { service.CertAutoRenewChan <- c.ID }()
 
 		w.WriteHeader(http.StatusAccepted)
 	}

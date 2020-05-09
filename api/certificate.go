@@ -260,7 +260,10 @@ func (h *certHandler) Post() http.HandlerFunc {
 			return
 		}
 
-		service.CertIssueChan <- c.ID
+		if !service.RequestIssue(c.ID) {
+			http.Error(w, http.StatusText(http.StatusTooManyRequests), http.StatusTooManyRequests)
+			return
+		}
 
 		// Build a response obj to return, specifically leaving out
 		// Keys and Certs
@@ -456,7 +459,10 @@ func (h *certHandler) Renew() http.HandlerFunc {
 			return
 		}
 
-		service.CertAutoRenewChan <- c.ID
+		if !service.RequestRenew(c.ID) {
+			http.Error(w, http.StatusText(http.StatusTooManyRequests), http.StatusTooManyRequests)
+			return
+		}
 
 		w.WriteHeader(http.StatusAccepted)
 	}

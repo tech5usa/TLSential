@@ -13,12 +13,69 @@ import (
 	"github.com/go-acme/lego/v3/lego"
 )
 
-var CertAutoRenewChan = make(chan string)
-var CertIssueChan = make(chan string)
+var CertAutoRenewChan chan string
+var CertIssueChan chan string
 
 type acmeService struct {
 	certService  cert.Service
 	challService challenge_config.Service
+}
+
+func CreateChannelsAndListeners(buffSize int, listeners int, cs cert.Service, as acme.Service) {
+	CertAutoRenewChan = make(chan string, buffSize)
+	CertIssueChan = make(chan string, buffSize)
+
+	for i := 0; i < listeners; i++ {
+		go handleCertChannels(cs, as)
+	}
+}
+
+//RequestRenew will try to send to the CertAutoRenewChan channel, but won't block if the channel is full.
+//Instead of blocking the function will return false to indicate that the send failed and you should try again later.
+func RequestRenew(id string) bool {
+	select {
+	case CertAutoRenewChan <- id:
+		return true
+	default:
+		return false
+	}
+}
+
+//RequestIssue will try to send to the CertIssueChan channel, but won't block if the channel is full.
+//Instead of blocking the function will return false to indicate that the send failed and you should try again later.
+func RequestIssue(id string) bool {
+	select {
+	case CertIssueChan <- id:
+		return true
+	default:
+		return false
+	}
+}
+
+func handleCertChannels(cs cert.Service, as acme.Service) {
+	for {
+		select {
+		case id := <-CertAutoRenewChan:
+			c, err := cs.Cert(id)
+
+			if err != nil {
+				log.Printf("service: acme: handleCertChannels: error with triggered autorenew of cert '%s': %s", id, err.Error())
+				break
+			}
+
+			if c == nil {
+				log.Printf("service: acme: handleCertChannels: told to renew cert '%s' which doesn't exist", id)
+				break
+			}
+
+			as.Renew(c)
+			break
+
+		case id := <-CertIssueChan:
+			as.Trigger(id)
+			break
+		}
+	}
 }
 
 func NewAcmeService(cts cert.Service, chs challenge_config.Service) acme.Service {

@@ -263,7 +263,7 @@ func (h *uiHandler) Certificate() http.HandlerFunc {
 		head := headTemplate{
 			fmt.Sprintf("Certificate - %s", cert.CommonName),
 			h.mix("/css/site.css"),
-			h.mix("/js/site.js")
+			h.mix("/js/site.js"),
 		}
 		p := certTemplate{
 			cert,
@@ -283,25 +283,30 @@ func (h *uiHandler) Certificate() http.HandlerFunc {
 var loadedHot bool
 var hotHost string
 
+// Prepend a given asset path with the appropriate HMR url if available
 func (h *uiHandler) mix(asset string) string {
 	if loadedHot == false {
 		// Memoize the fact that we've loaded early
 		loadedHot = true
 
+		// Resolve the CWD
 		dir, err := os.Getwd()
 		if err != nil {
 			log.Fatal(err)
 		}
 
+		// Resolve the contents of the hot file
 		host, err := ioutil.ReadFile(dir + "/static/hot")
 		if err == nil {
 			hotHost = strings.TrimSpace(string(host))
 		}
 	}
 
+	// If we actually have a hothost defined, prepend it to the given asset
 	if hotHost != "" {
 		return hotHost + asset
 	}
 
+	// Otherwise prepend the static directory
 	return "/static" + asset
 }

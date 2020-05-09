@@ -23,7 +23,7 @@ type acmeService struct {
 
 func CreateChannelsAndListeners(buffSize int, listeners int, cs cert.Service, as acme.Service) {
 	CertAutoRenewChan = make(chan string, buffSize)
-	CertIssueChan = make(chan string, buffSize)
+	CertIssueChan = make(chan string)
 
 	for i := 0; i < listeners; i++ {
 		go handleCertChannels(cs, as)

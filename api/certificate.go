@@ -260,10 +260,9 @@ func (h *certHandler) Post() http.HandlerFunc {
 			return
 		}
 
-		if !service.RequestIssue(c.ID) {
-			http.Error(w, http.StatusText(http.StatusTooManyRequests), http.StatusTooManyRequests)
-			return
-		}
+		//We're not using RequestIssue because we always want this request to go through even if the
+		//channel buffers are full.
+		go func(id string) { service.CertIssueChan <- id }(c.ID)
 
 		// Build a response obj to return, specifically leaving out
 		// Keys and Certs

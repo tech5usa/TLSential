@@ -18,6 +18,8 @@ poc/poc
 
 # Dependency directories (remove the comment below to include it)
 # vendor/
+node_modules
+mix-manifest.json
 
 # mac
 .DS_Store

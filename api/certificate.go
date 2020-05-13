@@ -11,7 +11,6 @@ import (
 	"github.com/ImageWare/TLSential/acme"
 	"github.com/ImageWare/TLSential/certificate"
 	"github.com/ImageWare/TLSential/model"
-	"github.com/ImageWare/TLSential/service"
 
 	"github.com/gorilla/mux"
 )
@@ -262,7 +261,7 @@ func (h *certHandler) Post() http.HandlerFunc {
 
 		//We're not using RequestIssue because we always want this request to go through even if the
 		//channel buffers are full.
-		go func(id string) { service.CertIssueChan <- id }(c.ID)
+		go func(id string) { h.acme.GetIssueChannel() <- id }(c.ID)
 
 		// Build a response obj to return, specifically leaving out
 		// Keys and Certs
@@ -458,7 +457,7 @@ func (h *certHandler) Renew() http.HandlerFunc {
 			return
 		}
 
-		if !service.RequestRenew(c.ID) {
+		if !h.acme.RequestRenew(c.ID) {
 			http.Error(w, http.StatusText(http.StatusTooManyRequests), http.StatusTooManyRequests)
 			return
 		}

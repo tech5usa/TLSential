@@ -13,8 +13,8 @@ import (
 	"github.com/go-acme/lego/v3/lego"
 )
 
-var CertAutoRenewChan chan string
-var CertIssueChan chan string
+var certAutoRenewChan chan string
+var certIssueChan chan string
 
 type acmeService struct {
 	certService  cert.Service
@@ -22,40 +22,18 @@ type acmeService struct {
 }
 
 func CreateChannelsAndListeners(buffSize int, listeners int, cs cert.Service, as acme.Service) {
-	CertAutoRenewChan = make(chan string, buffSize)
-	CertIssueChan = make(chan string)
+	certAutoRenewChan = make(chan string, buffSize)
+	certIssueChan = make(chan string)
 
 	for i := 0; i < listeners; i++ {
 		go handleCertChannels(cs, as)
 	}
 }
 
-//RequestRenew will try to send to the CertAutoRenewChan channel, but won't block if the channel is full.
-//Instead of blocking the function will return false to indicate that the send failed and you should try again later.
-func RequestRenew(id string) bool {
-	select {
-	case CertAutoRenewChan <- id:
-		return true
-	default:
-		return false
-	}
-}
-
-//RequestIssue will try to send to the CertIssueChan channel, but won't block if the channel is full.
-//Instead of blocking the function will return false to indicate that the send failed and you should try again later.
-func RequestIssue(id string) bool {
-	select {
-	case CertIssueChan <- id:
-		return true
-	default:
-		return false
-	}
-}
-
 func handleCertChannels(cs cert.Service, as acme.Service) {
 	for {
 		select {
-		case id := <-CertAutoRenewChan:
+		case id := <-as.GetAutoRenewChannel():
 			c, err := cs.Cert(id)
 
 			if err != nil {
@@ -71,7 +49,7 @@ func handleCertChannels(cs cert.Service, as acme.Service) {
 			as.Renew(c)
 			break
 
-		case id := <-CertIssueChan:
+		case id := <-as.GetIssueChannel():
 			as.Trigger(id)
 			break
 		}
@@ -82,8 +60,37 @@ func NewAcmeService(cts cert.Service, chs challenge_config.Service) acme.Service
 	return &acmeService{certService: cts, challService: chs}
 }
 
-func (s *acmeService) Trigger(id string) {
+//RequestRenew will try to send to the CertAutoRenewChan channel, but won't block if the channel is full.
+//Instead of blocking the function will return false to indicate that the send failed and you should try again later.
+func (s *acmeService) RequestRenew(id string) bool {
+	select {
+	case s.GetAutoRenewChannel() <- id:
+		return true
+	default:
+		return false
+	}
+}
 
+//RequestIssue will try to send to the CertIssueChan channel, but won't block if the channel is full.
+//Instead of blocking the function will return false to indicate that the send failed and you should try again later.
+func (s *acmeService) RequestIssue(id string) bool {
+	select {
+	case s.GetIssueChannel() <- id:
+		return true
+	default:
+		return false
+	}
+}
+
+func (s *acmeService) GetAutoRenewChannel() chan string {
+	return certAutoRenewChan
+}
+
+func (s *acmeService) GetIssueChannel() chan string {
+	return certIssueChan
+}
+
+func (s *acmeService) Trigger(id string) {
 	c, err := s.certService.Cert(id)
 	if err != nil {
 		log.Printf("Error getting cert from ID - ID: %s, Err: %s\n", id, err.Error())

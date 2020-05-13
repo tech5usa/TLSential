@@ -6,13 +6,12 @@ import (
 
 	"github.com/ImageWare/TLSential/acme"
 	"github.com/ImageWare/TLSential/certificate"
-	"github.com/ImageWare/TLSential/service"
 )
 
 // How often to scan all certificates to determine if they'll need renewal.
 var scanPeriod = time.Hour
 
-func scanAllCerts(cs certificate.Service) {
+func scanAllCerts(cs certificate.Service, as acme.Service) {
 	now := time.Now()
 
 	certs, err := cs.AllCerts()
@@ -23,7 +22,7 @@ func scanAllCerts(cs certificate.Service) {
 		hoursLeft := c.Expiry.Sub(now).Hours()
 		daysLeft := int(hoursLeft / 24)
 		if daysLeft < c.RenewAt {
-			service.CertAutoRenewChan <- c.ID
+			as.GetAutoRenewChannel() <- c.ID
 		}
 	}
 }
@@ -33,7 +32,7 @@ func autoRenewal(cs certificate.Service, as acme.Service) {
 		select {
 		case <-time.After(scanPeriod):
 			log.Print("Scanning all certs for renewal...")
-			scanAllCerts(cs)
+			scanAllCerts(cs, as)
 			break
 		}
 	}

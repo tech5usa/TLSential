@@ -41,6 +41,8 @@ func main() {
 	var noHTTPS bool
 	var noHTTPRedirect bool
 	var debug bool
+	var autoRenewBuffSize int = 10
+	var autoRenewListeners int = 10
 
 	// Grab any command line arguments
 	flag.IntVar(&port, "port", 443, "port for webserver to run on")
@@ -52,8 +54,18 @@ func main() {
 	flag.BoolVar(&noHTTPS, "no-https", false, "flag to run over http (HIGHLY INSECURE)")
 	flag.BoolVar(&noHTTPRedirect, "no-http-redirect", false, "flag to not redirect HTTP requests to HTTPS")
 	flag.BoolVar(&debug, "debug", false, "flag to increase logging")
+	flag.IntVar(&autoRenewBuffSize, "renew-buff", 10, "Set the buffer size of the certificate renewal channel")
+	flag.IntVar(&autoRenewListeners, "renew-threads", 10, "Set the number of threads handling certificate renewals and issues")
 
 	flag.Parse()
+
+	if autoRenewBuffSize < 1 || autoRenewBuffSize > 100 {
+		log.Fatal("renew-buff out of range. Must be between 1 and 100")
+	}
+
+	if autoRenewListeners < 1 || autoRenewListeners > 100 {
+		log.Fatal("renew-threads out of range. Must be between 1 and 100")
+	}
 
 	// Open our database file.
 	db, err := bolt.Open(dbFile, 0666, &bolt.Options{Timeout: 1 * time.Second})
@@ -75,7 +87,8 @@ func main() {
 	// Start a goroutine to automatically renew certificates in the DB.
 	cs := newCertService(db)
 	as := newACMEService(db)
-	go autoRenewal(cs, as)
+
+	service.CreateChannelsAndListeners(autoRenewBuffSize, autoRenewListeners, cs, as)
 
 	// Run http server concurrently
 	// Load routes for the server
@@ -160,12 +173,22 @@ func chainMiddleware(handler http.Handler, middlewares ...middleware) http.Handl
 	return handler
 }
 
+func getIP(r *http.Request) string {
+	addr := r.Header.Get("X-FORWARDED-FOR")
+	if addr == "" {
+		addr = r.RemoteAddr
+	}
+	return addr
+}
+
 func requestLoggingMiddleWare(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		start := time.Now()
 
 		//Defer in case one of the handlers down the line calls panic
-		defer func() { log.Println(r.Method, r.URL.Path, time.Since(start)) }()
+		defer func() {
+			log.Println(getIP(r), r.Method, r.URL.Path, time.Since(start))
+		}()
 
 		next.ServeHTTP(w, r)
 	})

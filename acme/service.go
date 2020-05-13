@@ -7,4 +7,8 @@ import "github.com/ImageWare/TLSential/model"
 type Service interface {
 	Trigger(id string)
 	Renew(c *model.Certificate)
+	RequestIssue(id string) bool
+	RequestRenew(id string) bool
+	GetAutoRenewChannel() chan string
+	GetIssueChannel() chan string
 }

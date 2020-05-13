@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/ImageWare/TLSential/acme"
+	"github.com/ImageWare/TLSential/auth"
 	"github.com/ImageWare/TLSential/certificate"
 	"github.com/ImageWare/TLSential/model"
 
@@ -259,7 +260,9 @@ func (h *certHandler) Post() http.HandlerFunc {
 			return
 		}
 
-		go h.acme.Trigger(c.ID)
+		//We're not using RequestIssue because we always want this request to go through even if the
+		//channel buffers are full.
+		go func(id string) { h.acme.GetIssueChannel() <- id }(c.ID)
 
 		// Build a response obj to return, specifically leaving out
 		// Keys and Certs
@@ -409,6 +412,15 @@ func (h *certHandler) GetPrivkey() http.HandlerFunc {
 			return
 		}
 
+		// Secrets are one time use for downloading PrivKeys.
+		c.Secret = auth.NewPassword()
+		err = h.cs.SaveCert(c)
+		if err != nil {
+			log.Printf("apiCertHandler GET PrivKey, SaveCert(), %s", err.Error())
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+
 		modtime := c.ModTime
 		filename := fmt.Sprintf("%s%s", c.CommonName, KeyFileExt)
 		cd := fmt.Sprintf("attachment; filename=%s", filename)
@@ -455,7 +467,10 @@ func (h *certHandler) Renew() http.HandlerFunc {
 			return
 		}
 
-		go h.acme.Renew(c)
+		if !h.acme.RequestRenew(c.ID) {
+			http.Error(w, http.StatusText(http.StatusTooManyRequests), http.StatusTooManyRequests)
+			return
+		}
 
 		w.WriteHeader(http.StatusAccepted)
 	}

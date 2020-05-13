@@ -6,31 +6,66 @@ import (
 	"log"
 	"net/http"
 
+	"github.com/ImageWare/TLSential/acme"
 	"github.com/ImageWare/TLSential/certificate"
+	"github.com/ImageWare/TLSential/challenge_config"
+	"github.com/ImageWare/TLSential/config"
 	"github.com/ImageWare/TLSential/model"
+	"github.com/ImageWare/TLSential/user"
+	"github.com/gorilla/csrf"
 	"github.com/gorilla/mux"
+	"github.com/gorilla/sessions"
 )
+
+const CookieName = "tlsential"
 
 // Handler provides an interface for all ui/calls.
 type Handler interface {
-	Route() *mux.Router
+	Route(bool) http.Handler
 }
 
 type uiHandler struct {
-	Title              string
+	Version            string
+	userService        user.Service
+	configService      config.Service
+	challengeService   challenge_config.Service
 	certificateService certificate.Service
+	acmeService        acme.Service
+	store              *sessions.CookieStore
 }
 
-func NewHandler(title string, cs certificate.Service) Handler {
-	return &uiHandler{title, cs}
+func NewHandler(version string, us user.Service, cs config.Service, chs challenge_config.Service, crs certificate.Service, as acme.Service) Handler {
+	key, err := cs.SessionKey()
+	if err != nil {
+		log.Fatal(err.Error())
+	}
+	store := sessions.NewCookieStore(key)
+	return &uiHandler{version, us, cs, chs, crs, as, store}
 }
 
-func (h *uiHandler) Route() *mux.Router {
+func (h *uiHandler) Route(unsafe bool) http.Handler {
+	key, err := h.configService.SessionKey()
+	if err != nil {
+		log.Fatal(err.Error())
+	}
+
+	var CSRF func(http.Handler) http.Handler
+
+	CSRF = csrf.Protect(
+		key,
+		csrf.SameSite(csrf.SameSiteStrictMode),
+		csrf.FieldName("csrf_token"),
+		csrf.Secure(!unsafe), // If unsafe, we pass in FALSE for secure.
+	)
+
 	r := mux.NewRouter()
-	r.HandleFunc("/ui/dashboard", h.Dashboard())
-	r.HandleFunc("/ui/cert/{id}", h.Certificate())
-	r.HandleFunc("/ui/login", h.Login())
-	return r
+	r.HandleFunc("/ui/dashboard", h.Authenticated(h.Dashboard()))
+	r.HandleFunc("/ui/cert/{id}", h.Authenticated(h.Certificate()))
+	r.HandleFunc("/ui/login", h.GetLogin()).Methods("GET")
+	r.HandleFunc("/ui/login", h.PostLogin()).Methods("POST")
+	r.HandleFunc("/ui/logout", h.Logout()).Methods("POST")
+
+	return CSRF(r)
 }
 
 type headTemplate struct {
@@ -39,26 +74,124 @@ type headTemplate struct {
 }
 
 type layoutTemplate struct {
-	Head headTemplate
-	C    interface{}
+	Head      headTemplate
+	C         interface{}
+	CSRFField template.HTML
 }
 
 type loginTemplate struct {
-	Head headTemplate
+	Head      headTemplate
+	Error     string
+	CSRFField template.HTML
 }
 
-func (h *uiHandler) Login() http.HandlerFunc {
+func (h *uiHandler) Authenticated(f http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		t, err := template.ParseGlob("ui/templates/*.html")
+		session, err := h.store.Get(r, CookieName)
 		if err != nil {
-			log.Print(err.Error())
+			log.Fatal(err.Error())
 		}
-		head := headTemplate{"Login", "site.css"}
-		p := loginTemplate{head}
-		err = t.ExecuteTemplate(w, "login", p)
+
+		// Check if user is authenticated
+		if auth, ok := session.Values["authenticated"].(bool); !ok || !auth {
+			http.Redirect(w, r, "/ui/login", http.StatusTemporaryRedirect)
+			return
+		}
+		f(w, r)
+	}
+}
+
+func (h *uiHandler) GetLogin() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		session, err := h.store.Get(r, CookieName)
 		if err != nil {
-			log.Print(err.Error())
+			log.Fatal(err.Error())
 		}
+
+		// Check if user is authenticated, if so send them to dashboard.
+		if auth, ok := session.Values["authenticated"].(bool); ok && auth {
+			http.Redirect(w, r, "/ui/dashboard", http.StatusTemporaryRedirect)
+			return
+		}
+		h.renderLogin(w, r, "")
+	}
+}
+
+func (h *uiHandler) renderLogin(w http.ResponseWriter, r *http.Request, uiError string) {
+	t, err := template.ParseGlob("ui/templates/*.html")
+	if err != nil {
+		log.Print(err.Error())
+	}
+	head := headTemplate{"Login", "site.css"}
+	p := loginTemplate{head, uiError, csrf.TemplateField(r)}
+	err = t.ExecuteTemplate(w, "login", p)
+	if err != nil {
+		log.Print(err.Error())
+	}
+}
+
+func (h *uiHandler) PostLogin() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		username := r.FormValue("username")
+		password := r.FormValue("password")
+
+		var uiError string
+
+		u, err := h.userService.GetUser(username)
+		if err != nil {
+			log.Print(err)
+			uiError = "Server error. Please try again later."
+			h.renderLogin(w, r, uiError)
+			return
+		}
+
+		if u == nil {
+			uiError = "User not found."
+			h.renderLogin(w, r, uiError)
+			return
+		}
+
+		match, err := u.ComparePasswordAndHash(password)
+		if err != nil {
+			log.Print(err)
+			uiError = "Server error. Please try again later."
+			h.renderLogin(w, r, uiError)
+			return
+		}
+
+		if !match {
+			uiError = "Invalid credentials."
+			h.renderLogin(w, r, uiError)
+			return
+		}
+
+		session, err := h.store.Get(r, CookieName)
+		if err != nil {
+			log.Fatal(err.Error())
+		}
+
+		// TODO: Add role and maybe username here.
+		// Set user as authenticated
+		session.Values["authenticated"] = true
+		session.Save(r, w)
+
+		http.Redirect(w, r, "/ui/dashboard", http.StatusTemporaryRedirect)
+	}
+}
+
+func (h *uiHandler) Logout() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+
+		session, err := h.store.Get(r, CookieName)
+		if err != nil {
+			log.Fatal(err.Error())
+		}
+
+		// Set user as NOT authenticated
+		session.Values["authenticated"] = false
+		session.Save(r, w)
+
+		http.Redirect(w, r, "/ui/login", http.StatusTemporaryRedirect)
 	}
 }
 
@@ -85,7 +218,7 @@ func (h *uiHandler) Dashboard() http.HandlerFunc {
 
 		// TODO: Fill out appropriate data for cert, renewed cert, and domain counts.
 		d := dashboardTemplate{4, 20, 69}
-		l := layoutTemplate{head, d}
+		l := layoutTemplate{head, d, csrf.TemplateField(r)}
 
 		err = t.ExecuteTemplate(w, "layout", l)
 		if err != nil {
@@ -133,6 +266,7 @@ func (h *uiHandler) Certificate() http.HandlerFunc {
 		l := layoutTemplate{
 			head,
 			p,
+			csrf.TemplateField(r),
 		}
 		err = t.ExecuteTemplate(w, "layout", l)
 		if err != nil {

@@ -8,4 +8,6 @@ type Repository interface {
 	SuperAdmin() (string, error)
 	SetJWTSecret([]byte) error
 	SetSuperAdmin(string) error
+	SessionKey() ([]byte, error)
+	SetSessionKey([]byte) error
 }

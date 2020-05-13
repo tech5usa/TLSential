@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/ImageWare/TLSential/acme"
+	"github.com/ImageWare/TLSential/auth"
 	"github.com/ImageWare/TLSential/certificate"
 	"github.com/ImageWare/TLSential/model"
 
@@ -408,6 +409,15 @@ func (h *certHandler) GetPrivkey() http.HandlerFunc {
 			// https://tools.ietf.org/html/rfc7235#section-3.1
 			w.Header().Set("WWW-Authenticate", "Secret")
 			http.Error(w, http.StatusText(http.StatusUnauthorized), http.StatusUnauthorized)
+			return
+		}
+
+		// Secrets are one time use for downloading PrivKeys.
+		c.Secret = auth.NewPassword()
+		err = h.cs.SaveCert(c)
+		if err != nil {
+			log.Printf("apiCertHandler GET PrivKey, SaveCert(), %s", err.Error())
+			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
 

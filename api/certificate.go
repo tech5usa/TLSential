@@ -260,7 +260,9 @@ func (h *certHandler) Post() http.HandlerFunc {
 			return
 		}
 
-		go h.acme.Trigger(c.ID)
+		//We're not using RequestIssue because we always want this request to go through even if the
+		//channel buffers are full.
+		go func(id string) { h.acme.GetIssueChannel() <- id }(c.ID)
 
 		// Build a response obj to return, specifically leaving out
 		// Keys and Certs
@@ -465,7 +467,10 @@ func (h *certHandler) Renew() http.HandlerFunc {
 			return
 		}
 
-		go h.acme.Renew(c)
+		if !h.acme.RequestRenew(c.ID) {
+			http.Error(w, http.StatusText(http.StatusTooManyRequests), http.StatusTooManyRequests)
+			return
+		}
 
 		w.WriteHeader(http.StatusAccepted)
 	}

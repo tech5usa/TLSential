@@ -26,3 +26,4 @@ mix-manifest.json
 
 # mac
 .DS_Store
+tlsential.db.lock

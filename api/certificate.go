@@ -13,9 +13,6 @@ import (
 	"github.com/ImageWare/TLSential/certificate"
 	"github.com/ImageWare/TLSential/model"
 
-	"github.com/go-acme/lego/v3/certcrypto"
-	"github.com/go-acme/lego/v3/lego"
-
 	"github.com/gorilla/mux"
 )
 
@@ -248,20 +245,7 @@ func (h *certHandler) Post() http.HandlerFunc {
 			return
 		}
 
-		config := lego.NewConfig(c)
-
-		config.CADirURL = model.CADirURL
-		config.Certificate.KeyType = certcrypto.RSA2048
-
-		client, err := lego.NewClient(config)
-
-		if err != nil {
-			log.Printf("api CertHandler POST, lego.NewClient(), %s", err.Error())
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
-		}
-
-		reg, err := h.acme.Register(client)
+		reg, err := h.acme.Register(c)
 
 		if err != nil {
 			log.Printf("api CertHandler POST, acme.Register(), %s", err.Error())

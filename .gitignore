@@ -21,6 +21,9 @@ poc/poc
 node_modules
 mix-manifest.json
 
+# Asset building stuff
+/static/hot
+
 # mac
 .DS_Store
 tlsential.db.lock

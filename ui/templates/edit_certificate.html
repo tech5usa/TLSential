@@ -37,8 +37,8 @@
       <button style="display:none;" id="form-working-message" class="btn btn-primary" disabled><i
           class="fas fa-spinner glyphicon-spin"></i> Loading...</button>
     </form>
-    {{.Validation.Success}}
-    {{.Validation.Error}}
+    {{if ne .Validation.Success ""}} {{.Validation.Success}}{{end}}
+    {{if ne .Validation.Error ""}} {{.Validation.Error}}{{end}}
   </div>
 </div>
 

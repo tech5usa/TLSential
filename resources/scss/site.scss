@@ -1,6 +1,50 @@
 // Include bootstrap
 @import '~bootstrap/scss/bootstrap.scss';
 
+
+$dropdown-link-color: $gray-900;
+$dropdown-link-active-color: $white;
+$dropdown-header-color: $white;
+
+$navbar-light-color: #808080;
+$navbar-light-active-color: #1e1e1e;
+$navbar-light-toggler-border-color: #808080;
+
+$navbar-dark-color: rgba($white, .75);
+$navbar-dark-hover-color: $white;
+$navbar-dark-active-color: $white;
+$navbar-dark-disabled-color: rgba($white, .25);
+
+$jumbotron-bg: rgba(235,235,235,0.95);
+
+$modal-lg: 1000px;
+$modal-md: 800px;
+$modal-sm: 500px;
+
+$input-btn-focus-color: rgba($secondary, .25);
+$input-focus-border-color: lighten($light, 25%);
+
+
+$modal-header-border-color: darken($light, 10%);
+
+.tls-navbar-light {
+  min-height: 3.5rem;
+  background-color: $light;
+  box-shadow: 0 0.5rem .5rem rgba(0,0,0,.01), inset 0 -1px 0 rgba(0,0,0,.1);
+  position: sticky !important;
+  top: 0;
+  z-index: 1071;
+}
+
+.tls-navbar-dark {
+  min-height: 3.5rem;
+  background-color: $primary;
+  box-shadow: 0 0.5rem 1rem rgba(0,0,0,.05), inset 0 -1px 0 rgba(0,0,0,.1);
+  position: sticky !important;
+  top: 0;
+  z-index: 1071;
+}
+
 .tls-form {
   position: relative;
   padding: 1rem;

@@ -21,7 +21,7 @@
     "bootstrap": "^4.4.1",
     "holderjs": "^2.9.7",
     "jquery": "^3.5.1",
-    "popper.js": "^1.16.1"
+    "popper.js": "^1.16.1",
     "cross-env": "^7.0.2",
     "laravel-mix": "^5.0.4"
   }

@@ -1,8 +1,31 @@
 {{define "content"}}
-<ul>
-{{ range .Certs }}
-<li><a href="/ui/cert/{{ .ID }}">{{.ID}} - {{.CommonName}}</a></li>
+<h2 class="tls-title">Certificates</h2>
 
-{{end}}
-</ul>
+<div class="tls-page">
+    <div class="row">
+        <div class="col-12 order-md-1">
+            <table class="table">
+
+                <thead>
+                    <tr>
+                        <th scope="col">Id</th>
+                        <th scope="col">Name</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {{ range .Certs }}
+                    <tr>
+                        <td>
+                            <a href="/ui/cert/{{ .ID }}">{{.ID}}</a>
+                        </td>
+                        <td>
+                            {{.CommonName}}
+                        </td>
+                    </tr>
+                    {{end}}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
 {{end}}

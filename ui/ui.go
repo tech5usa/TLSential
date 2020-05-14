@@ -3,8 +3,11 @@ package ui
 import (
 	"fmt"
 	"html/template"
+	"io/ioutil"
 	"log"
 	"net/http"
+	"os"
+	"strings"
 
 	"github.com/ImageWare/TLSential/acme"
 	"github.com/ImageWare/TLSential/certificate"
@@ -71,6 +74,7 @@ func (h *uiHandler) Route(unsafe bool) http.Handler {
 type headTemplate struct {
 	Title         string
 	CustomCSSFile string
+	CustomJSFile  string
 }
 
 type layoutTemplate struct {
@@ -122,7 +126,7 @@ func (h *uiHandler) renderLogin(w http.ResponseWriter, r *http.Request, uiError 
 	if err != nil {
 		log.Print(err.Error())
 	}
-	head := headTemplate{"Login", "site.css"}
+	head := headTemplate{"Login", h.mix("/css/site.css"), h.mix("/js/site.js")}
 	p := loginTemplate{head, uiError, csrf.TemplateField(r)}
 	err = t.ExecuteTemplate(w, "login", p)
 	if err != nil {
@@ -214,7 +218,7 @@ func (h *uiHandler) Dashboard() http.HandlerFunc {
 		if err != nil {
 			log.Print(err.Error())
 		}
-		head := headTemplate{"Dashboard", "site.css"}
+		head := headTemplate{"Dashboard", h.mix("/css/site.css"), h.mix("/js/site.js")}
 
 		// TODO: Fill out appropriate data for cert, renewed cert, and domain counts.
 		d := dashboardTemplate{4, 20, 69}
@@ -258,7 +262,8 @@ func (h *uiHandler) Certificate() http.HandlerFunc {
 
 		head := headTemplate{
 			fmt.Sprintf("Certificate - %s", cert.CommonName),
-			"site.css",
+			h.mix("/css/site.css"),
+			h.mix("/js/site.js"),
 		}
 		p := certTemplate{
 			cert,
@@ -273,4 +278,35 @@ func (h *uiHandler) Certificate() http.HandlerFunc {
 			log.Print(err.Error())
 		}
 	}
+}
+
+var loadedHot bool
+var hotHost string
+
+// Prepend a given asset path with the appropriate HMR url if available
+func (h *uiHandler) mix(asset string) string {
+	if loadedHot == false {
+		// Memoize the fact that we've loaded early
+		loadedHot = true
+
+		// Resolve the CWD
+		dir, err := os.Getwd()
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		// Resolve the contents of the hot file
+		host, err := ioutil.ReadFile(dir + "/static/hot")
+		if err == nil {
+			hotHost = strings.TrimSpace(string(host))
+		}
+	}
+
+	// If we actually have a hothost defined, prepend it to the given asset
+	if hotHost != "" {
+		return hotHost + asset
+	}
+
+	// Otherwise prepend the static directory
+	return "/static" + asset
 }

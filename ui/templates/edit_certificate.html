@@ -15,12 +15,14 @@
           <div class="invalid-feedback">
             Common name is required.
           </div>
+          
         </div>
         <div class="form-group col-lg-6 col-12">
           <label for="renew-at">Renew At (Days)</label>
           <div class="input-group">
             <input type="text" class="form-control" id="renew-at" placeholder="" name="renewAt" value="{{.RenewAt}}">
           </div>
+          {{if ne .Validation.RenewAt ""}} {{.Validation.RenewAt}}{{end}}
         </div>
       </div>
       <div class="form-row">
@@ -28,6 +30,7 @@
           <label for="domains">Domains</label>
           <input type="text" class="form-control" id="domains" name="domains" placeholder="" value="{{.Domains}}">
         </div>
+        {{if ne .Validation.Domains ""}} {{.Validation.Domains}}{{end}}
       </div>
 
       <button class="btn btn-primary" type="submit" id="submit-form">Save</button>

@@ -4,22 +4,22 @@
 <div class="tls-page">
     <div class="row">
         <div class="col-12 order-md-1">
-            <table class="table">
+            <table class="table table-hover">
 
                 <thead>
                     <tr>
-                        <th scope="col">Id</th>
                         <th scope="col">Name</th>
+                        <th scope="col" class="text-right">Expiration  Date</th>
                     </tr>
                 </thead>
                 <tbody>
                     {{ range .Certs }}
                     <tr>
                         <td>
-                            <a href="/ui/cert/{{ .ID }}">{{.ID}}</a>
+                            <a href="/ui/cert/{{ .ID }}">{{.CommonName}}</a>
                         </td>
-                        <td>
-                            {{.CommonName}}
+                        <td class="text-right">
+                            {{.Expiry}}
                         </td>
                     </tr>
                     {{end}}

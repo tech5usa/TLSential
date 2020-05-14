@@ -1,84 +1,32 @@
 {{define "content"}}
 
-
 <div class="container">
   <h2 class="tls-title">Edit {{.Cert.CommonName}}</h2>
   <div class="tls-form">
-    <form enctype="multipart/form-data" method="post" class="form-horizontal needs-validation" novalidate>
+    <form enctype="multipart/form-data" class="form-horizontal needs-validation" novalidate action="/ui/{{.ID}}/save"
+      method="POST" novalidate>
       <input id="id" id="name" value="{{.Cert.ID}}" hidden />
+      {{.CSRFField}}
 
       <div class="form-row">
         <div class="form-group col-lg-6 col-12">
           <label for="commonName">Common name</label>
-          <input type="text" class="form-control" id="commonName" placeholder="" value="{{.Cert.CommonName}}" required>
+          <input type="text" class="form-control" id="commonName" placeholder="" value="{{.CommonName}}" required>
           <div class="invalid-feedback">
             Common name is required.
           </div>
         </div>
         <div class="form-group col-lg-6 col-12">
           <label for="renew-at">Renew At (Days)</label>
-          <input type="text" class="form-control" id="renew-at" name="renew-at" placeholder="" value="{{.Cert.RenewAt}}" required>
+          <div class="input-group">
+            <input type="text" class="form-control" id="renew-at" placeholder="" name="renewAt" value="{{.RenewAt}}">
+          </div>
         </div>
       </div>
-      
-      <div class="row">
-        <div class="col-md-6 mb-3">
-
-        </div>
-
-
-
-
-        <div class="col-md-6 mb-3">
+      <div class="form-row">
+        <div class="form-group col-12">
           <label for="domains">Domains</label>
-          <ul class="list-group">
-            {{range .Cert.Domains}}
-            <li class="list-group-item">{{.}}</li>
-            {{end}}
-          </ul>
-        </div>
-      </div>
-      <div class="row">
-        <div class="col-md-6 mb-3">
-          <label for="cert-url">Cert URL</label>
-          <div class="input-group">
-            <input type="text" class="form-control" id="cert-url" placeholder="" value="{{.Cert.CertURL}}" readonly>
-          </div>
-        </div>
-        <div class="col-md-6 mb-3">
-          <label for="cert-stable-url">Cert Stable URL</label>
-          <div class="input-group">
-            <input type="text" class="form-control" id="cert-stable-url" placeholder="" value="{{.Cert.CertStableURL}}"
-              readonly>
-          </div>
-        </div>
-      </div>
-      <div class="row">
-        <div class="col-md-6 mb-3">
-          <label for="issued">Issued?</label>
-          <div class="input-group">
-            <input type="text" class="form-control" id="issued" placeholder="" value="{{.Cert.Issued}}" readonly>
-          </div>
-        </div>
-        <div class="col-md-6 mb-3">
-          <label for="last-error">Last Error</label>
-          <div class="input-group">
-            <input type="text" class="form-control" id="last-error" placeholder="" value="{{.Cert.LastError}}" readonly>
-          </div>
-        </div>
-      </div>
-      <div class="row">
-        <div class="col-md-6 mb-3">
-          <label for="expiry">Expiry</label>
-          <div class="input-group">
-            <input type="text" class="form-control" id="expiry" placeholder="" value="{{.Cert.Expiry}}" readonly>
-          </div>
-        </div>
-        <div class="col-md-6 mb-3">
-          <label for="renew-at">Renew At (Days)</label>
-          <div class="input-group">
-            <input type="text" class="form-control" id="renew-at" placeholder="" value="{{.Cert.RenewAt}}" readonly>
-          </div>
+          <input type="text" class="form-control" id="domains" name="domains" placeholder="" value="{{.Domains}}">
         </div>
       </div>
 

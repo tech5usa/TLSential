@@ -7,6 +7,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"strconv"
 	"strings"
 
 	"github.com/ImageWare/TLSential/acme"
@@ -52,9 +53,7 @@ func (h *uiHandler) Route(unsafe bool) http.Handler {
 		log.Fatal(err.Error())
 	}
 
-	var CSRF func(http.Handler) http.Handler
-
-	CSRF = csrf.Protect(
+	CSRF := csrf.Protect(
 		key,
 		csrf.SameSite(csrf.SameSiteStrictMode),
 		csrf.FieldName("csrf_token"),
@@ -63,7 +62,11 @@ func (h *uiHandler) Route(unsafe bool) http.Handler {
 
 	r := mux.NewRouter()
 	r.HandleFunc("/ui/dashboard", h.Authenticated(h.Dashboard()))
-	r.HandleFunc("/ui/cert/{id}", h.Authenticated(h.Certificate()))
+	r.HandleFunc("/ui/cert", h.Authenticated(h.ListCertificates()))
+	r.HandleFunc("/ui/cert/{id}", h.Authenticated(h.ViewCertificate())).Methods("GET")
+	r.HandleFunc("/ui/cert/{id}/edit", h.Authenticated(h.EditCertificate())).Methods("GET")
+	r.HandleFunc("/ui/cert/{id}/edit", h.Authenticated(h.SaveCertificate())).Methods("POST")
+
 	r.HandleFunc("/ui/login", h.GetLogin()).Methods("GET")
 	r.HandleFunc("/ui/login", h.PostLogin()).Methods("POST")
 	r.HandleFunc("/ui/logout", h.Logout()).Methods("POST")
@@ -235,14 +238,14 @@ type certTemplate struct {
 	Cert *model.Certificate
 }
 
-// Serve /ui/certificate page.
-func (h *uiHandler) Certificate() http.HandlerFunc {
+// Serve /ui/certificate/{id} page.
+func (h *uiHandler) ViewCertificate() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		files := []string{
 			"ui/templates/layout.html",
 			"ui/templates/head.html",
 			"ui/templates/footer.html",
-			"ui/templates/certificate.html",
+			"ui/templates/view_certificate.html",
 		}
 		t, err := template.ParseFiles(files...)
 		if err != nil {
@@ -280,6 +283,132 @@ func (h *uiHandler) Certificate() http.HandlerFunc {
 	}
 }
 
+// Serve /ui/cert/{id}/edit page.
+func (h *uiHandler) SaveCertificate() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		domains := r.FormValue("domains")
+		renewAt := r.FormValue("renewAt")
+
+		id := mux.Vars(r)["id"]
+
+		cert, err := h.certificateService.Cert(id)
+		if err != nil {
+			log.Print(err.Error())
+			http.Error(w, "whoops", http.StatusInternalServerError)
+			return
+		}
+
+		cv := certValidation{}
+
+		cert.RenewAt, err = strconv.Atoi(renewAt)
+		if err != nil {
+			cv.RenewAt = "Invalid RenewAt value"
+			cv.Error = "Fix invalid fields and try again."
+			h.renderCertificate(w, r, cv)
+			return
+		}
+
+		cert.Domains = strings.Split(domains, ",")
+		if !model.ValidDomains(cert.Domains) {
+			cv.Domains = "One or more domains are not valid"
+			cv.Error = "Fix invalid fields and try again."
+			h.renderCertificate(w, r, cv)
+			return
+		}
+
+		h.certificateService.SaveCert(cert)
+		if err != nil {
+			log.Print(err.Error())
+			http.Error(w, "noooooo", http.StatusInternalServerError)
+			return
+		}
+
+		cv.Success = "Successfully saved certificate."
+		h.renderCertificate(w, r, cv)
+
+	}
+}
+
+type editCertTemplate struct {
+	ID         string
+	CommonName string
+	Domains    string
+	RenewAt    int
+	CSRFField  template.HTML
+	Validation certValidation
+}
+
+type certValidation struct {
+	Domains string
+	RenewAt string
+	Success string
+	Error   string
+}
+
+// Serve /ui/cert/{id}/edit page.
+func (h *uiHandler) EditCertificate() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		cv := certValidation{}
+		h.renderCertificate(w, r, cv)
+	}
+}
+
+func (h *uiHandler) renderCertificate(w http.ResponseWriter, r *http.Request, cv certValidation) {
+	files := []string{
+		"ui/templates/layout.html",
+		"ui/templates/head.html",
+		"ui/templates/footer.html",
+		"ui/templates/edit_certificate.html",
+	}
+	t, err := template.ParseFiles(files...)
+	if err != nil {
+		log.Print(err.Error())
+		http.Error(w, "drats", http.StatusInternalServerError)
+		return
+	}
+
+	id := mux.Vars(r)["id"]
+
+	cert, err := h.certificateService.Cert(id)
+	if err != nil {
+		log.Print(err.Error())
+		http.Error(w, "whoops", http.StatusInternalServerError)
+		return
+	}
+
+	if cert == nil {
+		http.Error(w, "Not found.", http.StatusNotFound)
+		return
+	}
+
+	head := headTemplate{
+		fmt.Sprintf("Certificate - %s", cert.CommonName),
+		h.mix("/css/site.css"),
+		h.mix("/js/site.js"),
+	}
+
+	domains := strings.Join(cert.Domains, ",")
+	p := editCertTemplate{
+		ID:         cert.ID,
+		CommonName: cert.CommonName,
+		Domains:    domains,
+		RenewAt:    cert.RenewAt,
+		CSRFField:  csrf.TemplateField(r),
+		Validation: cv,
+	}
+
+	l := layoutTemplate{
+		head,
+		p,
+		csrf.TemplateField(r),
+	}
+
+	err = t.ExecuteTemplate(w, "layout", l)
+	if err != nil {
+		log.Print(err.Error())
+	}
+}
+
 var loadedHot bool
 var hotHost string
 
@@ -309,4 +438,52 @@ func (h *uiHandler) mix(asset string) string {
 
 	// Otherwise prepend the static directory
 	return "/static" + asset
+}
+
+type certListTemplate struct {
+	Certs []*model.Certificate
+}
+
+// Serve /ui/cert page.
+func (h *uiHandler) ListCertificates() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		files := []string{
+			"ui/templates/layout.html",
+			"ui/templates/head.html",
+			"ui/templates/footer.html",
+			"ui/templates/certificates.html",
+		}
+		t, err := template.ParseFiles(files...)
+		if err != nil {
+			log.Print(err.Error())
+			http.Error(w, "uh oh", http.StatusInternalServerError)
+			return
+		}
+
+		certs, err := h.certificateService.AllCerts()
+		if err != nil {
+			log.Print(err.Error())
+			http.Error(w, "yikes", http.StatusInternalServerError)
+			return
+		}
+
+		head := headTemplate{
+			"Certificates",
+			h.mix("/css/site.css"),
+			h.mix("/js/site.js"),
+		}
+
+		p := certListTemplate{
+			certs,
+		}
+		l := layoutTemplate{
+			head,
+			p,
+			csrf.TemplateField(r),
+		}
+		err = t.ExecuteTemplate(w, "layout", l)
+		if err != nil {
+			log.Print(err.Error())
+		}
+	}
 }

@@ -1,0 +1,19 @@
+{{define "head"}}
+<div id="certificate-delete-modal" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="deleteConfirmModal" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-danger">
+                <h5 class="modal-title text-light">Warning!</h5>
+            </div>
+            <div class="modal-body">
+                <p>Deleting this <span class="font-weight-bold">certificate</span> cannot be undone.</p>
+                <p class="font-weight-bold">Are you sure you want to do this?</p>
+            </div>
+            <div class="modal-footer">
+                <button data-dismiss="modal" id="Cancel" type="button" class="btn btn-outline-secondary">Cancel</button>
+                <a role="button" href="go/delete?id={{ .ID}}" class="btn btn-primary pull-right">Delete</a>
+            </div>
+        </div><!-- /.modal-content -->
+    </div>
+</div><!-- /.modal -->
+{{end}}

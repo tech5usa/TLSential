@@ -1,13 +1,55 @@
 // Include bootstrap
 @import '~bootstrap/scss/bootstrap.scss';
 
+
+$dropdown-link-color: $gray-900;
+$dropdown-link-active-color: $white;
+$dropdown-header-color: $white;
+
+$navbar-light-color: #808080;
+$navbar-light-active-color: #1e1e1e;
+$navbar-light-toggler-border-color: #808080;
+
+$navbar-dark-color: rgba($white, .75);
+$navbar-dark-hover-color: $white;
+$navbar-dark-active-color: $white;
+$navbar-dark-disabled-color: rgba($white, .25);
+
+$jumbotron-bg: rgba(235,235,235,0.95);
+
+$modal-lg: 1000px;
+$modal-md: 800px;
+$modal-sm: 500px;
+
+$input-btn-focus-color: rgba($secondary, .25);
+$input-focus-border-color: lighten($light, 25%);
+
+
+$modal-header-border-color: darken($light, 10%);
+
+.tls-navbar-light {
+  min-height: 3.5rem;
+  background-color: $light;
+  box-shadow: 0 0.25rem .5rem rgba(0,0,0,.01), inset 0 -1px 0 rgba(0,0,0,.1);
+  position: sticky !important;
+  top: 0;
+  z-index: 1071;
+}
+
+.tls-navbar-dark {
+  min-height: 3.5rem;
+  background-color: $primary;
+  box-shadow: 0 0.5rem 1rem rgba(0,0,0,.05), inset 0 -1px 0 rgba(0,0,0,.1);
+  position: sticky !important;
+  top: 0;
+  z-index: 1071;
+}
+
 .tls-form {
   position: relative;
   padding: 1rem;
   margin: 1rem -15px 0;
-  /* border: solid $light; */
-  border: solid #f8f9fa;
-  border-width: 0.2rem 0 0;
+  border: solid $light;
 }
 .container {
   max-width: 960px;
@@ -32,7 +74,7 @@
 }
 
 html body {
-  background-color: #f2f2f2;
+  background-color: $white;
 }
 
 html,
@@ -52,7 +94,7 @@ align-items: center;
 justify-content: center;
 padding-top: 40px;
 padding-bottom: 40px;
-background-color: #f2f2f2;
+background-color: $light;
 } */
 
 .form-signin {
@@ -98,12 +140,12 @@ background-color: #f2f2f2;
 
 .tls-navbar-dark {
   min-height: 3.5rem;
-  background-color: #f2f2f2;
+  background-color: $light;
   box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.05), inset 0 -1px 0 rgba(0, 0, 0, 0.1);
   position: sticky !important;
   top: 0;
   z-index: 1071;
-  color: #007bff;
+  color: $primary;
 }
 
 .tls-page {
@@ -121,9 +163,48 @@ background-color: #f2f2f2;
   box-sizing: border-box;
   /* position: absolute;  */
 }
-.tsl-title {
+.tls-title {
   margin-top: 2rem;
   margin-bottom: 0.5rem;
   font-weight: 300;
 
+}
+.tsl-footer {
+  background-color: $light;
+}
+.table-icon {
+  font-size: 1.2rem;
+  line-height: 1.2;
+  padding-right: 0.25rem !important;
+}
+
+/*Loading button*/
+.glyphicon-spin {
+  -webkit-animation: spin .7s infinite linear;
+  animation: spin .7s infinite linear;
+  font-weight: 400;
+}
+
+@-webkit-keyframes spin {
+  0% {
+      -webkit-transform: rotate(0deg);
+      transform: rotate(0deg);
+  }
+
+  100% {
+      -webkit-transform: rotate(359deg);
+      transform: rotate(359deg);
+  }
+}
+
+@keyframes spin {
+  0% {
+      -webkit-transform: rotate(0deg);
+      transform: rotate(0deg);
+  }
+
+  100% {
+      -webkit-transform: rotate(359deg);
+      transform: rotate(359deg);
+  }
 }

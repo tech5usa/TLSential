@@ -14,8 +14,15 @@
         if (form.checkValidity() === false) {
           event.preventDefault();
           event.stopPropagation();
-        }
-        form.classList.add('was-validated');
+      }
+      else {
+          if ($('#submit-form') != null) {
+              $('#submit-form').hide();
+              $('#submit-form').prop('disabled', true);
+              $('#form-working-message').show();
+          }
+      }
+      form.classList.add('was-validated');
       }, false);
     });
   }, false);

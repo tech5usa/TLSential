@@ -90,6 +90,7 @@ func main() {
 
 	service.CreateChannelsAndListeners(autoRenewBuffSize, autoRenewListeners, cs, as)
 
+	go autoRenewal(cs, as)
 	// Run http server concurrently
 	// Load routes for the server
 	var mux http.Handler

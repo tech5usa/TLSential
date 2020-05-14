@@ -121,11 +121,6 @@ func TestNewCertificate(t *testing.T) {
 				t.Error("email mismatch")
 			}
 
-			// TODO: Test ACMERegistration values, like Status, ToS, etc.
-			if c.ACMERegistration == nil {
-				t.Error("acme registration shouldn't be nil")
-			}
-
 			if c.ACMEKey == nil {
 				t.Error("acme key should not be nil")
 			}

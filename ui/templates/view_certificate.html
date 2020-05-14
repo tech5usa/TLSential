@@ -1,0 +1,105 @@
+{{define "content"}}
+
+<div class="container">
+  <div class="py-5">
+    <h2>{{.Cert.CommonName}}</h2>
+  </div>
+
+  <div class="row">
+
+    <div class="col-md-8 order-md-1">
+      <h4 class="mb-3">Certificate</h4>
+
+        <div class="row">
+          <div class="col-md-6 mb-3">
+            <label for="id">ID</label>
+            <input type="text" class="form-control" id="id" placeholder="" value="{{.Cert.ID}}" readonly>
+          </div>
+          <div class="col-md-6 mb-3">
+            <label for="secret">Secret</label>
+            <div class="input-group">
+              <input type="text" class="form-control" id="secret" placeholder="" value="{{.Cert.Secret}}" readonly>
+            </div>
+          </div>
+        </div>
+        <div class="row">
+          <div class="col-md-6 mb-3">
+            <label for="commonName">Common name</label>
+            <input type="text" class="form-control" id="commonName" placeholder="" value="{{.Cert.CommonName}}"
+            readonly>
+          </div>
+
+          <div class="col-md-6 mb-3">
+            <label for="domains">Domains</label>
+            <ul class="list-group">
+              {{range .Cert.Domains}}
+              <li class="list-group-item">{{.}}</li>
+              {{end}}
+            </ul>
+          </div>
+        </div>
+
+        <div class="row">
+          <div class="col-md-6 mb-3">
+            <label for="cert-url">Cert URL</label>
+            <div class="input-group">
+              <input type="text" class="form-control" id="cert-url" placeholder="" value="{{.Cert.CertURL}}" readonly>
+            </div>
+          </div>
+
+          <div class="col-md-6 mb-3">
+            <label for="cert-stable-url">Cert Stable URL</label>
+            <div class="input-group">
+              <input type="text" class="form-control" id="cert-stable-url" placeholder=""
+                value="{{.Cert.CertStableURL}}" readonly>
+            </div>
+          </div>
+        </div>
+
+        <div class="row">
+          <div class="col-md-6 mb-3">
+            <label for="issued">Issued?</label>
+            <div class="input-group">
+              <input type="text" class="form-control" id="issued" placeholder="" value="{{.Cert.Issued}}" readonly>
+            </div>
+          </div>
+
+          <div class="col-md-6 mb-3">
+            <label for="last-error">Last Error</label>
+            <div class="input-group">
+              <input type="text" class="form-control" id="last-error"
+              placeholder="" value="{{.Cert.LastError}}" readonly>
+            </div>
+          </div>
+        </div>
+
+        <div class="row">
+          <div class="col-md-6 mb-3">
+            <label for="expiry">Expiry</label>
+            <div class="input-group">
+              <input type="text" class="form-control" id="expiry" placeholder="" value="{{.Cert.Expiry}}" readonly>
+            </div>
+          </div>
+          <div class="col-md-6 mb-3">
+            <label for="renew-at">Renew At (Days)</label>
+            <div class="input-group">
+              <input type="text" class="form-control" id="renew-at"
+              placeholder="" value="{{.Cert.RenewAt}}" readonly>
+            </div>
+          </div>
+        </div>
+
+        <div class="row">
+          <div class="col-md-6 mb-3">
+            <label for="email">Email</label>
+            <div class="input-group">
+              <input type="text" class="form-control" id="email" placeholder="" value="{{.Cert.ACMEEmail}}" readonly>
+            </div>
+          </div>
+        </div>
+        <form action="/ui/cert/{{.Cert.ID}}/edit"><button type="submit">Edit</button></form>
+        <form action="/ui/cert/{{.Cert.ID}}/delete"><button type="submit">Delete</button></form>
+    </div>
+  </div>
+
+  {{end}}

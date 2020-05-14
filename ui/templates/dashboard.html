@@ -14,24 +14,28 @@
           <a class="float-right mt-1" href="/ui/cert">View certificates</a>
         </div>
       </div>
-        <div class="row">
-          <div class="col-md-6 col-12 mb-3">
-            <div title="Total certificates" data-toggle="tooltip" data-placement="bottom">
-              <label for="TotalCerts" class="text-muted">Certificates</label>
-              <txt>{{ .TotalCerts}}</txt>
-            </div>
+        <div class="row mt-2">
+          <div class="col-md-6 col-12 mb-3" >
+              <h6>
+                <span title="Total certificates" class="pull-left" data-toggle="tooltip" data-placement="bottom">
+                  <label for="TotalCerts" class="text-muted font-weight-normal">Certificates</label>
+                  <txt>{{ .TotalCerts}}</txt>
+                </span>
+              </h6>
           </div>
           <div class="col-md-6 col-12 mb-3">
-            <div title="Total renewed certificates" data-toggle="tooltip" data-placement="bottom">
-              <label for="TotalRenewedCerts" class="text-muted float-right">Renewed certificates</label>
-              <txt class="float-right">{{ .TotalRenewedCerts}}</txt>
-            </div>
+              <h6 class="float-right" title="Total renewed certificates" data-toggle="tooltip" data-placement="bottom">
+                <label for="TotalRenewedCerts" class="text-muted font-weight-normal">Renewed certificates:</label>
+                <txt>{{ .TotalRenewedCerts}}</txt>
+              </h6>
           </div>
           <div class="col-md-6 col-12 mb-3">
-            <div title="Total domains" data-toggle="tooltip" data-placement="bottom">
-              <label for="TotalDomains" class="text-muted">Domains</label>
-              <txt>{{ .TotalDomains}}</txt>
-            </div>
+              <h6>
+                <span title="Total domains" data-toggle="tooltip" data-placement="bottom">
+                  <label for="TotalDomains" class="text-muted font-weight-normal">Domains:</label>
+                  <txt>{{ .TotalDomains}}</txt>
+                </span>
+              </h6>
           </div>
         </div>
 

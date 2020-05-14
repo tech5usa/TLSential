@@ -30,7 +30,7 @@ $modal-header-border-color: darken($light, 10%);
 .tls-navbar-light {
   min-height: 3.5rem;
   background-color: $light;
-  box-shadow: 0 0.5rem .5rem rgba(0,0,0,.01), inset 0 -1px 0 rgba(0,0,0,.1);
+  box-shadow: 0 0.25rem .5rem rgba(0,0,0,.01), inset 0 -1px 0 rgba(0,0,0,.1);
   position: sticky !important;
   top: 0;
   z-index: 1071;
@@ -76,7 +76,7 @@ $modal-header-border-color: darken($light, 10%);
 }
 
 html body {
-  background-color: $light;
+  background-color: $white;
 }
 
 html,
@@ -170,4 +170,7 @@ background-color: $light;
   margin-bottom: 0.5rem;
   font-weight: 300;
 
+}
+.tsl-footer {
+  background-color: $light;
 }

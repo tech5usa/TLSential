@@ -10936,7 +10936,7 @@ a.text-dark:focus {
 .tls-navbar-light {
   min-height: 3.5rem;
   background-color: #f8f9fa;
-  box-shadow: 0 0.5rem 0.5rem rgba(0, 0, 0, 0.01), inset 0 -1px 0 rgba(0, 0, 0, 0.1);
+  box-shadow: 0 0.25rem 0.5rem rgba(0, 0, 0, 0.01), inset 0 -1px 0 rgba(0, 0, 0, 0.1);
   position: -webkit-sticky !important;
   position: sticky !important;
   top: 0;
@@ -10987,7 +10987,7 @@ a.text-dark:focus {
 }
 
 html body {
-  background-color: #f8f9fa;
+  background-color: #fff;
 }
 
 html,
@@ -11086,5 +11086,9 @@ background-color: $light;
   margin-top: 2rem;
   margin-bottom: 0.5rem;
   font-weight: 300;
+}
+
+.tsl-footer {
+  background-color: #f8f9fa;
 }
 

@@ -10987,7 +10987,7 @@ a.text-dark:focus {
 }
 
 html body {
-  background-color: #f2f2f2;
+  background-color: #f8f9fa;
 }
 
 html,
@@ -11007,7 +11007,7 @@ align-items: center;
 justify-content: center;
 padding-top: 40px;
 padding-bottom: 40px;
-background-color: #f2f2f2;
+background-color: $light;
 } */
 
 .form-signin {
@@ -11057,7 +11057,7 @@ background-color: #f2f2f2;
 
 .tls-navbar-dark {
   min-height: 3.5rem;
-  background-color: #f2f2f2;
+  background-color: #f8f9fa;
   box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.05), inset 0 -1px 0 rgba(0, 0, 0, 0.1);
   position: -webkit-sticky !important;
   position: sticky !important;

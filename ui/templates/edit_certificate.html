@@ -1,11 +1,11 @@
 {{define "content"}}
 
 <div class="container">
-  <h2 class="tls-title">Edit {{.Cert.CommonName}}</h2>
+  <h2 class="tls-title">Edit {{.CommonName}}</h2>
   <div class="tls-form">
-    <form enctype="multipart/form-data" class="form-horizontal needs-validation" novalidate action="/ui/{{.ID}}/save"
+    <form enctype="multipart/form-data" class="form-horizontal needs-validation" novalidate action="/ui/cert/{{.ID}}/edit"
       method="POST" novalidate>
-      <input id="id" id="name" value="{{.Cert.ID}}" hidden />
+      <input id="id" id="name" value="{{.ID}}" hidden />
       {{.CSRFField}}
 
       <div class="form-row">

@@ -31,11 +31,11 @@
           <h4 class="mb-2 ">Details</h4>
         </div>
         <div class="col-4">
-          <a data-toggle="tooltip" data-placement="bottom" class="table-icon text-danger float-right pr-2"
+          <a data-toggle="tooltip" data-placement="bottom" class="table-icon text-danger float-right pr-3"
             title="Delete certificate" href="/ui/cert/{{ .Cert.ID }}/delete">
             <i class="fas fa-trash"></i>
           </a>
-          <a data-toggle="tooltip" data-placement="bottom" class="table-icon text-primary float-right pl-2"
+          <a data-toggle="tooltip" data-placement="bottom" class="table-icon text-primary float-right pl-3"
             title="Edit certificate" href="/ui/cert/{{ .Cert.ID }}/edit"><i class="fas fa-pencil-alt"></i>
           </a>
 
@@ -50,7 +50,7 @@
           </h6>
         </div>
         <div class="col-md-6 col-12 mb-3">
-          <h6 title="Secret" data-toggle="tooltip" data-placement="bottom">
+          <h6 title="Secret" class="float-right" data-toggle="tooltip" data-placement="bottom">
             <label class="text-muted font-weight-normal">Secret:</label>
             <txt>{{.Cert.Secret}}</txt>
           </h6>

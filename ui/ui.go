@@ -303,6 +303,7 @@ func (h *uiHandler) SaveCertificate() http.HandlerFunc {
 		cert.RenewAt, err = strconv.Atoi(renewAt)
 		if err != nil {
 			cv.RenewAt = "Invalid RenewAt value"
+			cv.Error = "Fix invalid fields and try again."
 			h.renderCertificate(w, r, cv)
 			return
 		}
@@ -310,6 +311,8 @@ func (h *uiHandler) SaveCertificate() http.HandlerFunc {
 		cert.Domains = strings.Split(domains, ",")
 		if !model.ValidDomains(cert.Domains) {
 			cv.Domains = "One or more domains are not valid"
+			cv.Error = "Fix invalid fields and try again."
+			h.renderCertificate(w, r, cv)
 			return
 		}
 

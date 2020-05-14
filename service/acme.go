@@ -236,11 +236,7 @@ func (s *acmeService) Register(u lregistration.User) (*lregistration.Resource, e
 	}
 
 	reg, err := c.Registration.Register(lregistration.RegisterOptions{TermsOfServiceAgreed: true})
-	if err != nil {
-		return nil, err
-	}
-
-	return reg, nil
+	return reg, err
 
 }
 

@@ -49,9 +49,7 @@ $modal-header-border-color: darken($light, 10%);
   position: relative;
   padding: 1rem;
   margin: 1rem -15px 0;
-  /* border: solid $light; */
-  border: solid #f8f9fa;
-  border-width: 0.2rem 0 0;
+  border: solid $light;
 }
 .container {
   max-width: 960px;
@@ -173,4 +171,34 @@ background-color: $light;
 }
 .tsl-footer {
   background-color: $light;
+}
+/*Loading button*/
+.glyphicon-spin {
+  -webkit-animation: spin .7s infinite linear;
+  animation: spin .7s infinite linear;
+  font-weight: 400;
+}
+
+@-webkit-keyframes spin {
+  0% {
+      -webkit-transform: rotate(0deg);
+      transform: rotate(0deg);
+  }
+
+  100% {
+      -webkit-transform: rotate(359deg);
+      transform: rotate(359deg);
+  }
+}
+
+@keyframes spin {
+  0% {
+      -webkit-transform: rotate(0deg);
+      transform: rotate(0deg);
+  }
+
+  100% {
+      -webkit-transform: rotate(359deg);
+      transform: rotate(359deg);
+  }
 }

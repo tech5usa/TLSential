@@ -18099,6 +18099,12 @@ __webpack_require__.r(__webpack_exports__);
         if (form.checkValidity() === false) {
           event.preventDefault();
           event.stopPropagation();
+        } else {
+          if ($('#submit-form') != null) {
+            $('#submit-form').hide();
+            $('#submit-form').prop('disabled', true);
+            $('#form-working-message').show();
+          }
         }
 
         form.classList.add('was-validated');

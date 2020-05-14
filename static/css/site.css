@@ -10957,9 +10957,7 @@ a.text-dark:focus {
   position: relative;
   padding: 1rem;
   margin: 1rem -15px 0;
-  /* border: solid $light; */
   border: solid #f8f9fa;
-  border-width: 0.2rem 0 0;
 }
 
 .container {
@@ -11090,5 +11088,33 @@ background-color: $light;
 
 .tsl-footer {
   background-color: #f8f9fa;
+}
+
+/*Loading button*/
+
+.glyphicon-spin {
+  -webkit-animation: spin 0.7s infinite linear;
+  animation: spin 0.7s infinite linear;
+  font-weight: 400;
+}
+
+@-webkit-keyframes spin {
+  0% {
+    transform: rotate(0deg);
+  }
+
+  100% {
+    transform: rotate(359deg);
+  }
+}
+
+@keyframes spin {
+  0% {
+    transform: rotate(0deg);
+  }
+
+  100% {
+    transform: rotate(359deg);
+  }
 }
 

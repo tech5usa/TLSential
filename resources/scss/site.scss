@@ -147,7 +147,7 @@ background-color: #f2f2f2;
   position: sticky !important;
   top: 0;
   z-index: 1071;
-  color: #007bff;
+  color: $primary;
 }
 
 .tls-page {
@@ -165,7 +165,7 @@ background-color: #f2f2f2;
   box-sizing: border-box;
   /* position: absolute;  */
 }
-.tsl-title {
+.tls-title {
   margin-top: 2rem;
   margin-bottom: 0.5rem;
   font-weight: 300;

@@ -11090,6 +11090,12 @@ background-color: $light;
   background-color: #f8f9fa;
 }
 
+.table-icon {
+  font-size: 1.2rem;
+  line-height: 1.2;
+  padding-right: 0.25rem !important;
+}
+
 /*Loading button*/
 
 .glyphicon-spin {

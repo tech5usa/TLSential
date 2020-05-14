@@ -172,6 +172,12 @@ background-color: $light;
 .tsl-footer {
   background-color: $light;
 }
+.table-icon {
+  font-size: 1.2rem;
+  line-height: 1.2;
+  padding-right: 0.25rem !important;
+}
+
 /*Loading button*/
 .glyphicon-spin {
   -webkit-animation: spin .7s infinite linear;

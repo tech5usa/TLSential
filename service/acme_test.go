@@ -14,7 +14,7 @@ type certTest struct {
 	expectedError string
 }
 
-func testRegister(t *testing.T) {
+func TestRegister(t *testing.T) {
 	certTests := []certTest{
 		{
 			"happy path",
@@ -50,14 +50,16 @@ func testRegister(t *testing.T) {
 
 	for _, ct := range certTests {
 		t.Run(ct.testName, func(t *testing.T) {
+
 			c, err := model.NewCertificate(ct.domains, ct.email)
 
-			if err == nil {
-				a := NewAcmeService(nil, nil)
-				reg, err := a.Register(c)
-				if err != nil {
-					c.ACMERegistration = reg
-				}
+			if err != nil {
+				t.Error("Error creating certificate", err)
+			}
+			a := NewAcmeService(nil, nil)
+			reg, err := a.Register(c)
+			if err != nil {
+				c.ACMERegistration = reg
 			}
 
 			if err == nil {

@@ -28,7 +28,7 @@
         <div class="form-group col-lg-6 col-12">
           <label for="commonName">Common name</label>
           <input type="text" class="form-control" id="commonName" placeholder="" value="{{.CommonName}}" required>
-          <div class="invalid-feedback" style="display: block;">
+          <div class="invalid-feedback">
             Common name is required.
           </div>
 
@@ -44,8 +44,8 @@
             <!--TODO change validation to be better for client side-->
             {{.Validation.RenewAt}}
           </div>
+          {{end}}
         </div>
-        {{end}}
       </div>
 
       <div class="form-row">
@@ -54,7 +54,7 @@
           <input type="text" class="form-control" id="domains" name="domains" placeholder="" value="{{.Domains}}">
         </div>
         {{if ne .Validation.Domains ""}}
-        <div class="invalid-feedback">
+        <div class="invalid-feedback" style="display: block;">
           {{.Validation.Domains}}
         </div>
         {{end}}

@@ -222,7 +222,18 @@ func (s *acmeService) Renew(c *model.Certificate) {
 
 }
 
-func (s *acmeService) Register(c *lego.Client) (*lregistration.Resource, error) {
+func (s *acmeService) Register(u lregistration.User) (*lregistration.Resource, error) {
+
+	config := lego.NewConfig(u)
+
+	config.CADirURL = model.CADirURL
+	config.Certificate.KeyType = certcrypto.RSA2048
+
+	c, err := lego.NewClient(config)
+
+	if err != nil {
+		return nil, err
+	}
 
 	reg, err := c.Registration.Register(lregistration.RegisterOptions{TermsOfServiceAgreed: true})
 	if err != nil {

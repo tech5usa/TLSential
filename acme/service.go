@@ -2,7 +2,6 @@ package acme
 
 import (
 	"github.com/ImageWare/TLSential/model"
-	"github.com/go-acme/lego/v3/lego"
 	lregistration "github.com/go-acme/lego/v3/registration"
 )
 
@@ -15,5 +14,5 @@ type Service interface {
 	RequestRenew(id string) bool
 	GetAutoRenewChannel() chan string
 	GetIssueChannel() chan string
-	Register(*lego.Client) (*lregistration.Resource, error)
+	Register(lregistration.User) (*lregistration.Resource, error)
 }

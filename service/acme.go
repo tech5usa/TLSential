@@ -11,6 +11,7 @@ import (
 	"github.com/go-acme/lego/v3/certcrypto"
 	lcert "github.com/go-acme/lego/v3/certificate"
 	"github.com/go-acme/lego/v3/lego"
+	lregistration "github.com/go-acme/lego/v3/registration"
 )
 
 var certAutoRenewChan chan string
@@ -218,6 +219,17 @@ func (s *acmeService) Renew(c *model.Certificate) {
 	if err != nil {
 		log.Fatal(err)
 	}
+
+}
+
+func (s *acmeService) Register(c *lego.Client) (*lregistration.Resource, error) {
+
+	reg, err := c.Registration.Register(lregistration.RegisterOptions{TermsOfServiceAgreed: true})
+	if err != nil {
+		return nil, err
+	}
+
+	return reg, nil
 
 }
 

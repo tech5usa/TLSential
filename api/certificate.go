@@ -13,6 +13,9 @@ import (
 	"github.com/ImageWare/TLSential/certificate"
 	"github.com/ImageWare/TLSential/model"
 
+	"github.com/go-acme/lego/v3/certcrypto"
+	"github.com/go-acme/lego/v3/lego"
+
 	"github.com/gorilla/mux"
 )
 
@@ -244,6 +247,28 @@ func (h *certHandler) Post() http.HandlerFunc {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
+
+		config := lego.NewConfig(c)
+
+		config.CADirURL = model.CADirURL
+		config.Certificate.KeyType = certcrypto.RSA2048
+
+		client, err := lego.NewClient(config)
+
+		if err != nil {
+			log.Printf("api CertHandler POST, lego.NewClient(), %s", err.Error())
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		reg, err := h.acme.Register(client)
+
+		if err != nil {
+			log.Printf("api CertHandler POST, acme.Register(), %s", err.Error())
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		c.ACMERegistration = reg
 
 		//TODO: Should probably decide valid range for client supplied RenewAt value
 		//For instance we may not want them to be able to specify 0 or less, as that would

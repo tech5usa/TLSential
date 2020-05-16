@@ -2,6 +2,8 @@
 #
 # Check https://circleci.com/docs/2.0/language-go/ for more details
 version: 2.1
+orbs:
+  newman: postman/newman@0.0.2
 jobs:
   build:
     docker:
@@ -25,12 +27,9 @@ jobs:
       - run: go get -v -t -d ./...
       - run: go test -v ./...
 
-orbs:
-      newman: postman/newman@0.0.2
-      jobs:
-            newman-collection-run:
-                    executor: newman/postman-newman-docker
-                        steps:
-                                  - checkout
-                                          - newman/newman-run:
-                                                        collection: ./collection.json
+  newman-collection-run:
+    executor: newman/postman-newman-docker
+    steps:
+      - checkout
+      - newman/newman-run:
+        collection: ./postman-collection.json

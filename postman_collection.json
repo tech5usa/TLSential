@@ -1,0 +1,157 @@
+{
+	"info": {
+		"_postman_id": "351bf9f5-0170-4c2f-a3e3-d2d33b859ca8",
+		"name": "TLSential",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "Create Super Admin",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"id": "dbd011b7-bc45-4f96-bc51-ce34f3f60025",
+						"exec": [
+							"pm.test(\"Status code is 201\", function () {\r",
+							"    pm.response.to.have.status(201);\r",
+							"});\r",
+							"pm.test(\"Password exists\", function () {\r",
+							"    var jsonData = pm.response.json();\r",
+							"    if(pm.expect(typeof jsonData.Password).to.equal('string')) {\r",
+							"        // Store the password\r",
+							"        pm.collectionVariables.set('sa_password', jsonData.Password)\r",
+							"    }\r",
+							"});"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [],
+				"url": {
+					"raw": "http://{{host}}/api/config/superadmin/{{sa_user}}",
+					"protocol": "http",
+					"host": [
+						"{{host}}"
+					],
+					"path": [
+						"api",
+						"config",
+						"superadmin",
+						"{{sa_user}}"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Get SA Auth Token",
+			"event": [
+				{
+					"listen": "prerequest",
+					"script": {
+						"id": "9e89c707-8042-4e77-9a6b-6fa2f7e58370",
+						"exec": [
+							"var user = pm.globals.get(\"sa_user\")",
+							"var pass = pm.collectionVariables.get(\"sa_password\")",
+							"var basic_auth = btoa(user + \":\" + pass)",
+							"pm .collectionVariables.set(\"sa_base64\", \"Basic \" + basic_auth)"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "{{sa_base64}}",
+						"type": "text"
+					}
+				],
+				"url": {
+					"raw": "http://{{host}}/api/authenticate",
+					"protocol": "http",
+					"host": [
+						"{{host}}"
+					],
+					"path": [
+						"api",
+						"authenticate"
+					]
+				},
+				"description": "Get a JWT from the /api/authenticate endpoint using the Super Admin credentials."
+			},
+			"response": []
+		}
+	],
+	"auth": {
+		"type": "bearer",
+		"bearer": [
+			{
+				"key": "token",
+				"value": "{{jwt}}",
+				"type": "string"
+			}
+		]
+	},
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"id": "baa6ec77-e5cf-4bb3-a7fa-3c54b2dbbb66",
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"id": "16cf0f60-919d-4969-922e-aa9107bf99d3",
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		}
+	],
+	"variable": [
+		{
+			"id": "8d290347-52c2-41c9-bb17-601da6fdcd2e",
+			"key": "jwt",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"id": "f3c59c9a-56dd-4ee9-a50f-0f5b47281b8d",
+			"key": "username",
+			"value": "tlsential",
+			"type": "string"
+		},
+		{
+			"id": "e94f3167-25e6-47e7-8ca8-c3f76534f077",
+			"key": "password",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"id": "86951d50-dcce-43c2-85a8-de6c54395698",
+			"key": "sa_base64",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"id": "5cf8c85d-1565-49bb-aa53-6e1137abd9b4",
+			"key": "sa_password",
+			"value": "",
+			"type": "string"
+		}
+	],
+	"protocolProfileBehavior": {}
+}

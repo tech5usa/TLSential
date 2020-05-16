@@ -52,6 +52,11 @@ func (h *configHandler) SuperAdmin() http.HandlerFunc {
 		// Try and create new SA
 		u, p, err := h.cs.CreateSuperAdmin(id)
 		if err != nil {
+			if err == service.ErrSuperAdminExists {
+				log.Printf("SuperAdmin, CreateSuperAdmin(), attempt to create second Super Admin")
+				http.Error(w, err.Error(), http.StatusBadRequest)
+				return
+			}
 			log.Printf("SuperAdmin, CreateSuperAdmin(), %s", err.Error())
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return

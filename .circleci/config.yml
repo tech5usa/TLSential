@@ -33,3 +33,10 @@ jobs:
       - checkout
       - newman/newman-run:
         collection: ./postman-collection.json
+
+workflows:
+    version: 2
+    build_and_test:
+        jobs:
+            - build
+            - newman-collection-run

@@ -2,8 +2,6 @@
 #
 # Check https://circleci.com/docs/2.0/language-go/ for more details
 version: 2.1
-orbs:
-    newman: postman/newman@0.0.2
 jobs:
     build:
         docker:
@@ -25,25 +23,10 @@ jobs:
 
           # specify any bash command here prefixed with `run: `
             - run: go get -v -t -d ./...
-            - run: go test -v ./...
-
-    newman-collection-run:
-        executor: newman/postman-newman-docker
-        steps:
-            - checkout
             - run: go build
+            - run: go test -v ./...
             - run: 
                 command: ./TLSential -no-https -port 8080
                 background: true
-            - newman/newman-run:
-                collection: ./TLSential.postman_collection.json
-                environment: ./TLSential.postman_environment.json
+            - run: newman run -e TLSential.postman_environment.json TLSential.postman_collection.json
 
-workflows:
-    version: 2
-    build_and_test:
-        jobs:
-            - build
-            - newman-collection-run:
-                requires:
-                    - build

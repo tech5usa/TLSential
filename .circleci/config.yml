@@ -26,6 +26,7 @@ jobs:
           # specify any bash command here prefixed with `run: `
             - run: go get -v -t -d ./...
             - run: go test -v ./...
+            - run: go build
             - run: ./TLSential -no-https -port 8080
 
     newman-collection-run:

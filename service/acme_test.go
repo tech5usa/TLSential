@@ -1,37 +1,48 @@
 package service
 
 import (
+	"errors"
 	"testing"
 
+	"github.com/ImageWare/TLSential/acme"
 	"github.com/ImageWare/TLSential/model"
+	lregistration "github.com/go-acme/lego/v3/registration"
 )
 
 type certTest struct {
 	testName      string
 	domains       []string
 	email         string
+	registrar     UserRegistrar
 	expectedError string
 }
 
+type justReturnRegistrar struct {
+	resource *lregistration.Resource
+	err      error
+}
+
+func (r *justReturnRegistrar) Register(u lregistration.User) (*lregistration.Resource, error) {
+	return r.resource, r.err
+}
+
 func TestRegister(t *testing.T) {
+	passThruError := errors.New("This is the expected error")
 	certTests := []certTest{
 		{
 			"happy path",
 			[]string{"example.com", "example2.com"},
 			"test@notexample.com",
+			&justReturnRegistrar{nil, nil},
 			"",
 		},
 		{
-			"email at example.com",
-			[]string{"example.com"},
-			"test@example.com",
-			"acme: error: 400 :: POST :: https://acme-v02.api.letsencrypt.org/acme/new-acct :: urn:ietf:params:acme:error:invalidEmail :: Error creating new account :: invalid contact domain. Contact emails @example.com are forbidden, url: ",
-		},
-		{
-			"wildcard domain",
-			[]string{"*.example.com"},
-			"test@notexample.com",
-			"",
+			//This test makes sure the registrar is actually being called
+			"return error",
+			[]string{"somestuff.com"},
+			"test@aurl.com",
+			&justReturnRegistrar{nil, passThruError},
+			passThruError.Error(),
 		},
 	}
 
@@ -44,7 +55,12 @@ func TestRegister(t *testing.T) {
 				t.Error("Error creating certificate", err)
 				return
 			}
-			a := NewAcmeService(nil, nil)
+			var a acme.Service
+			if ct.registrar == nil {
+				a = NewAcmeService(nil, nil)
+			} else {
+				a = NewAcmeServiceWithRegistrar(nil, nil, ct.registrar)
+			}
 			reg, err := a.Register(c)
 
 			if err != nil {
@@ -78,24 +94,4 @@ func TestRegister(t *testing.T) {
 			}
 		})
 	}
-}
-
-func testEq(a, b []string) bool {
-
-	// If one is nil, the other must also be nil.
-	if (a == nil) != (b == nil) {
-		return false
-	}
-
-	if len(a) != len(b) {
-		return false
-	}
-
-	for i := range a {
-		if a[i] != b[i] {
-			return false
-		}
-	}
-
-	return true
 }

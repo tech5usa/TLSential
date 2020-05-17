@@ -20,7 +20,14 @@ var certIssueChan chan string
 type acmeService struct {
 	certService  cert.Service
 	challService challenge_config.Service
+	registrar    UserRegistrar
 }
+
+type UserRegistrar interface {
+	Register(u lregistration.User) (*lregistration.Resource, error)
+}
+
+type legoRegistrar struct{}
 
 func CreateChannelsAndListeners(buffSize int, listeners int, cs cert.Service, as acme.Service) {
 	certAutoRenewChan = make(chan string, buffSize)
@@ -57,8 +64,14 @@ func handleCertChannels(cs cert.Service, as acme.Service) {
 	}
 }
 
+//Create a new acme.Service with a default LEGO registrar
 func NewAcmeService(cts cert.Service, chs challenge_config.Service) acme.Service {
-	return &acmeService{certService: cts, challService: chs}
+	return NewAcmeServiceWithRegistrar(cts, chs, &legoRegistrar{})
+}
+
+//Create a new acme.Service that uses the supplied UserRegistrar. registrar must not be nil
+func NewAcmeServiceWithRegistrar(cts cert.Service, chs challenge_config.Service, registrar UserRegistrar) acme.Service {
+	return &acmeService{certService: cts, challService: chs, registrar: registrar}
 }
 
 //RequestRenew will try to send to the CertAutoRenewChan channel, but won't block if the channel is full.
@@ -223,7 +236,19 @@ func (s *acmeService) Renew(c *model.Certificate) {
 }
 
 func (s *acmeService) Register(u lregistration.User) (*lregistration.Resource, error) {
+	return s.registrar.Register(u)
+}
 
+func getExpiry(c *model.Certificate) time.Time {
+	x509Cert, err := certcrypto.ParsePEMCertificate(c.Certificate)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	return x509Cert.NotAfter
+}
+
+func (l *legoRegistrar) Register(u lregistration.User) (*lregistration.Resource, error) {
 	config := lego.NewConfig(u)
 
 	config.CADirURL = model.CADirURL
@@ -237,14 +262,4 @@ func (s *acmeService) Register(u lregistration.User) (*lregistration.Resource, e
 
 	reg, err := c.Registration.Register(lregistration.RegisterOptions{TermsOfServiceAgreed: true})
 	return reg, err
-
-}
-
-func getExpiry(c *model.Certificate) time.Time {
-	x509Cert, err := certcrypto.ParsePEMCertificate(c.Certificate)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	return x509Cert.NotAfter
 }

@@ -9,7 +9,9 @@ Clone the repo. From the root directory, run `go build`. You should now have a b
 
 # Running TLSential
 
-You can run it with the default settings by just executing ./TLSential from the root directory. You can configure the server's port by using the `--port [port]` parameter.
+You can run it with the default settings by executing `./TLSential from the root directory.
+
+When developing, you will most likely run `./TLSential --no-https --port 8080`
 
 # Building TLSential assets
 

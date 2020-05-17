@@ -27,7 +27,9 @@ jobs:
             - run: go get -v -t -d ./...
             - run: go test -v ./...
             - run: go build
-            - run: ./TLSential -no-https -port 8080
+            - run: 
+                command: ./TLSential -no-https -port 8080
+                background: true
 
     newman-collection-run:
         executor: newman/postman-newman-docker

@@ -22,12 +22,6 @@ func TestRegister(t *testing.T) {
 			"",
 		},
 		{
-			"no domains",
-			[]string{},
-			"test@notexample.com",
-			model.ErrInvalidDomains.Error(),
-		},
-		{
 			"email at example.com",
 			[]string{"example.com"},
 			"test@example.com",
@@ -38,12 +32,6 @@ func TestRegister(t *testing.T) {
 			[]string{"*.example.com"},
 			"test@notexample.com",
 			"",
-		},
-		{
-			"bad wildcard domain",
-			[]string{"https://*.example.com"},
-			"test@notexample.com",
-			model.ErrInvalidDomains.Error(),
 		},
 	}
 

@@ -32,7 +32,8 @@ jobs:
         steps:
             - checkout
             - newman/newman-run:
-                collection: ./postman-collection.json
+                collection: ./TLSential.postman_collection.json
+                environment: ./TLSential.postman_environment.json
 
 workflows:
     version: 2

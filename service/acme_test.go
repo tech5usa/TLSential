@@ -95,3 +95,32 @@ func TestRegister(t *testing.T) {
 		})
 	}
 }
+
+func TestChannels(t *testing.T) {
+	t.Run("request_issue", func(t *testing.T) {
+		CreateChannelsAndListeners(1, 0, nil, nil)
+
+		a := NewAcmeServiceWithRegistrar(nil, nil, nil)
+
+		if !a.RequestRenew("id") {
+			t.Error("Should not have blocked yet")
+			return
+		}
+
+		if a.RequestIssue("id2") {
+			t.Error("Should have blocked")
+			return
+		}
+
+		select {
+		case id := <-a.GetAutoRenewChannel():
+			if id != "id" {
+				t.Errorf("expected 'id' but got '%s'", id)
+			}
+			break
+		default:
+			t.Error("Could not read from channel")
+		}
+	})
+
+}

@@ -62,6 +62,18 @@
 						],
 						"type": "text/javascript"
 					}
+				},
+				{
+					"listen": "test",
+					"script": {
+						"id": "ee20bf19-c7c0-4b7e-b507-96228f44556d",
+						"exec": [
+							"pm.test(\"Status code is 200\", function () {",
+							"    pm.response.to.have.status(200);",
+							"});"
+						],
+						"type": "text/javascript"
+					}
 				}
 			],
 			"request": {
@@ -123,31 +135,31 @@
 	],
 	"variable": [
 		{
-			"id": "92e20daf-e298-4921-943b-3d7ae84fed19",
+			"id": "18324647-cad0-4da2-affc-77285f8e1f5d",
 			"key": "jwt",
 			"value": "",
 			"type": "string"
 		},
 		{
-			"id": "2d950bf3-dec2-4f6d-8dd9-8ba6c0ea6556",
+			"id": "69cc1027-f487-48fe-bbd4-75747d49f4eb",
 			"key": "username",
 			"value": "tlsential",
 			"type": "string"
 		},
 		{
-			"id": "8dc0867b-df9a-415a-b07c-f8af900af7b5",
+			"id": "8fd4bbda-d283-4249-a73e-09c47cbc7b12",
 			"key": "password",
 			"value": "",
 			"type": "string"
 		},
 		{
-			"id": "c8707a91-e971-4b39-b2aa-d46eab20f773",
+			"id": "f1110231-0a40-4b4f-ba5c-b708b755f8bb",
 			"key": "sa_base64",
 			"value": "",
 			"type": "string"
 		},
 		{
-			"id": "3927351b-0598-4640-8eb2-f437243fa3d4",
+			"id": "6733706f-7358-4ce0-8362-1e832ef65407",
 			"key": "sa_password",
 			"value": "",
 			"type": "string"

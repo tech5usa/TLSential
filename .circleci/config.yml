@@ -26,15 +26,15 @@ jobs:
           # specify any bash command here prefixed with `run: `
             - run: go get -v -t -d ./...
             - run: go test -v ./...
-            - run: go build
-            - run: 
-                command: ./TLSential -no-https -port 8080
-                background: true
 
     newman-collection-run:
         executor: newman/postman-newman-docker
         steps:
             - checkout
+            - run: go build
+            - run: 
+                command: ./TLSential -no-https -port 8080
+                background: true
             - newman/newman-run:
                 collection: ./TLSential.postman_collection.json
                 environment: ./TLSential.postman_environment.json

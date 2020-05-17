@@ -8,7 +8,7 @@ jobs:
     build:
         docker:
           # specify the version
-            - image: circleci/golang:1.13.4
+            - image: circleci/golang:latest
 
           # Specify service dependencies here if necessary
           # CircleCI maintains a library of pre-built images
@@ -26,6 +26,7 @@ jobs:
           # specify any bash command here prefixed with `run: `
             - run: go get -v -t -d ./...
             - run: go test -v ./...
+            - run: ./TLSential -no-https -port 8080
 
     newman-collection-run:
         executor: newman/postman-newman-docker
@@ -40,4 +41,6 @@ workflows:
     build_and_test:
         jobs:
             - build
-            - newman-collection-run
+            - newman-collection-run:
+                requires:
+                    - build

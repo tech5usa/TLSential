@@ -50,10 +50,20 @@
           </h6>
         </div>
         <div class="col-md-6 col-12 mb-3">
-          <h6 title="Secret" class="float-right" data-toggle="tooltip" data-placement="bottom">
-            <label class="text-muted font-weight-normal">Secret:</label>
-            <txt>{{.Cert.Secret}}</txt>
-          </h6>
+          <div class="row">
+            <div class="col-12">
+              <h6 title="Secret" class="float-right" data-toggle="tooltip" data-placement="bottom">
+                <label class="text-muted font-weight-normal">Secret:</label>
+                  <txt id="secrect-value">{{.Cert.Secret}}</a>
+              </h6>
+            </div>
+          </div>
+          <div class="row mt-n3">
+            <div class="col-12">
+              <a id="secret-spot" href="#" class="float-right text-decoration-none">Copy secret</a>
+            </div>
+          </div>
+          
 
         </div>
         <div class="col-md-6 col-12 mb-3">
@@ -113,5 +123,22 @@
 
     </div>
   </div>
+  <script>
+    window.onload = function () {
+      $("#secret-spot").click(function () {
+        var secret = $("#secrect-value").html();
+        navigator.clipboard.writeText(secret).then(function () {
+          $("#secret-spot").html("Copied!");
+          setTimeout(function(){ 
+            $("#secret-spot").html("Copy secret"); 
+          }, 2000);
 
+        }, function () {
+          /* clipboard write failed */
+          console.log("There was an error trying to copy to the users clipboard.");
+        });
+      });
+    }
+
+  </script>
   {{end}}

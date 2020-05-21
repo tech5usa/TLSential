@@ -62,10 +62,12 @@ func (h *uiHandler) Route(unsafe bool) http.Handler {
 
 	r := mux.NewRouter()
 	r.HandleFunc("/ui/dashboard", h.Authenticated(h.Dashboard()))
-	r.HandleFunc("/ui/cert", h.Authenticated(h.ListCertificates()))
-	r.HandleFunc("/ui/cert/{id}", h.Authenticated(h.ViewCertificate())).Methods("GET")
-	r.HandleFunc("/ui/cert/{id}/edit", h.Authenticated(h.EditCertificate())).Methods("GET")
-	r.HandleFunc("/ui/cert/{id}/edit", h.Authenticated(h.SaveCertificate())).Methods("POST")
+	r.HandleFunc("/ui/certificates", h.Authenticated(h.ListCertificates()))
+	r.HandleFunc("/ui/certificate/id/{id}", h.Authenticated(h.ViewCertificate())).Methods("GET")
+	r.HandleFunc("/ui/certificate/id/{id}/edit", h.Authenticated(h.EditCertificate())).Methods("GET")
+	r.HandleFunc("/ui/certificate/id/{id}/edit", h.Authenticated(h.SaveCertificate())).Methods("POST")
+
+	r.HandleFunc("/ui/certificate/create", h.Authenticated(h.CreateCertificate()))
 
 	r.HandleFunc("/ui/login", h.GetLogin()).Methods("GET")
 	r.HandleFunc("/ui/login", h.PostLogin()).Methods("POST")
@@ -234,6 +236,111 @@ func (h *uiHandler) Dashboard() http.HandlerFunc {
 	}
 }
 
+type createCertTemplate struct {
+	Domains    string
+	RenewAt    string
+	Email      string
+	CSRFField  template.HTML
+	Validation certValidation
+}
+
+type certValidation struct {
+	Domains string
+	RenewAt string
+	Email   string
+	Success string
+	Error   string
+}
+
+// Serve /ui/certificate/{id} page.
+func (h *uiHandler) CreateCertificate() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		if r.Method == "POST" {
+			cv := certValidation{}
+
+			domains := strings.Split(r.FormValue("domains"), ",")
+			email := r.FormValue("email")
+			cert, err := model.NewCertificate(domains, email)
+			if err != nil {
+				if err == model.ErrInvalidDomains {
+					cv.Domains = "One or more domains are not valid"
+					cv.Error = "Fix invalid fields and try again."
+					h.renderCreateCertificate(w, r, cv)
+					return
+				}
+				if err == model.ErrInvalidEmail {
+					cv.Email = "Submitted email address is not valid"
+					cv.Error = "Fix invalid fields and try again."
+					h.renderCreateCertificate(w, r, cv)
+					return
+				}
+			}
+
+			renewAt, err := strconv.Atoi(r.FormValue("renewAt"))
+			if err != nil {
+				cv.RenewAt = "Invalid RenewAt value"
+				cv.Error = "Fix invalid fields and try again."
+				h.renderCreateCertificate(w, r, cv)
+				return
+			}
+			cert.RenewAt = renewAt
+			err = h.certificateService.SaveCert(cert)
+			if err != nil {
+				log.Print(err.Error())
+				http.Error(w, "oh dang", http.StatusInternalServerError)
+				return
+			}
+
+			//We're not using RequestIssue because we always want this request to go through even if the
+			//channel buffers are full.
+			go func(id string) { h.acmeService.GetIssueChannel() <- id }(cert.ID)
+			http.Redirect(w, r, "/ui/certificate/id/"+cert.ID, http.StatusSeeOther)
+			return
+		}
+		h.renderCreateCertificate(w, r, certValidation{})
+	}
+}
+
+func (h *uiHandler) renderCreateCertificate(w http.ResponseWriter, r *http.Request, cv certValidation) {
+	files := []string{
+		"ui/templates/layout.html",
+		"ui/templates/head.html",
+		"ui/templates/footer.html",
+		"ui/templates/create_certificate.html",
+	}
+	t, err := template.ParseFiles(files...)
+	if err != nil {
+		log.Print(err.Error())
+		http.Error(w, "oh boyyyy :(", http.StatusInternalServerError)
+		return
+	}
+
+	head := headTemplate{
+		fmt.Sprintf("Create New Certificate"),
+		h.mix("/css/site.css"),
+		h.mix("/js/site.js"),
+	}
+
+	p := createCertTemplate{
+		Domains:    r.FormValue("domains"),
+		RenewAt:    r.FormValue("renewAt"),
+		Email:      r.FormValue("email"),
+		CSRFField:  csrf.TemplateField(r),
+		Validation: cv,
+	}
+
+	l := layoutTemplate{
+		head,
+		p,
+		csrf.TemplateField(r),
+	}
+
+	err = t.ExecuteTemplate(w, "layout", l)
+	if err != nil {
+		log.Print(err.Error())
+	}
+}
+
 type certTemplate struct {
 	Cert *model.Certificate
 }
@@ -323,9 +430,13 @@ func (h *uiHandler) SaveCertificate() http.HandlerFunc {
 			return
 		}
 
+		if ok := h.acmeService.RequestRenew(cert.ID); !ok {
+			log.Print("***WARNING*** Renew pipeline full...")
+			http.Error(w, "whoops", http.StatusTooManyRequests)
+			return
+		}
 		cv.Success = "Successfully saved certificate."
-		h.renderCertificate(w, r, cv)
-
+		http.Redirect(w, r, "/ui/certificate/id/"+cert.ID, http.StatusSeeOther)
 	}
 }
 
@@ -336,13 +447,6 @@ type editCertTemplate struct {
 	RenewAt    int
 	CSRFField  template.HTML
 	Validation certValidation
-}
-
-type certValidation struct {
-	Domains string
-	RenewAt string
-	Success string
-	Error   string
 }
 
 // Serve /ui/cert/{id}/edit page.

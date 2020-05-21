@@ -114,6 +114,10 @@ func (s *acmeService) Trigger(id string) {
 	if err != nil {
 		log.Printf("Error creating New DNS Provider - ID: %s, Err: %s\n", id, err.Error())
 		c.LastError = err
+		err = s.certService.SaveCert(c)
+		if err != nil {
+			log.Fatal(err.Error())
+		}
 		return
 	}
 	err = client.Challenge.SetDNS01Provider(provider)
@@ -128,8 +132,8 @@ func (s *acmeService) Trigger(id string) {
 
 	signedCert, err := client.Certificate.Obtain(request)
 	if err != nil {
-		c.LastError = err
 		log.Printf("Error getting cert from ID - ID: %s, Err: %s\n", id, err.Error())
+		c.LastError = err
 		err = s.certService.SaveCert(c)
 		if err != nil {
 			log.Fatal(err.Error())

@@ -17,22 +17,28 @@
 </div>
 {{end}}
 <div class="container">
-  <h2 class="tls-title">Edit {{.CommonName}}</h2>
+  <h2 class="tls-title">Create Certificate</h2>
   <div class="tls-form">
     <form enctype="multipart/form-data" class="form-horizontal needs-validation" novalidate
-      action="/ui/certificate/id/{{.ID}}/edit" method="POST" novalidate>
-      <input id="id" id="name" value="{{.ID}}" hidden />
+      action="/ui/certificate/create" method="POST" novalidate>
+      
       {{.CSRFField}}
 
       <div class="form-row">
         <div class="form-group col-lg-6 col-12">
-          <label for="commonName">Common name</label>
-          <input type="text" class="form-control" id="commonName" placeholder="" value="{{.CommonName}}" required>
+          <label for="email">Email</label>
+          <input type="text" class="form-control" id="email" name="email" placeholder="" value="{{.Email}}" required>
           <div class="invalid-feedback">
-            Common name is required.
+            Email is required.
           </div>
-
         </div>
+        {{if ne .Validation.Email ""}}
+          <div class="invalid-feedback" style="display: block;">
+            {{.Validation.Email}}
+          </div>
+          {{end}}
+
+
         <div class="form-group col-lg-6 col-12">
           <label for="renew-at">Renew At (Days)</label>
           <div class="input-group">

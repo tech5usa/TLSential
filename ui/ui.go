@@ -21,7 +21,7 @@ import (
 	"github.com/gorilla/sessions"
 )
 
-const CookieName = "tlsential"
+const cookieName = "tlsential"
 
 // Handler provides an interface for all ui/calls.
 type Handler interface {
@@ -38,6 +38,7 @@ type uiHandler struct {
 	store              *sessions.CookieStore
 }
 
+// NewHandler returns a new UI Handler for use in main.
 func NewHandler(version string, us user.Service, cs config.Service, chs challenge_config.Service, crs certificate.Service, as acme.Service) Handler {
 	key, err := cs.SessionKey()
 	if err != nil {
@@ -47,6 +48,7 @@ func NewHandler(version string, us user.Service, cs config.Service, chs challeng
 	return &uiHandler{version, us, cs, chs, crs, as, store}
 }
 
+// Route returns a handler for all /ui/ routes.
 func (h *uiHandler) Route(unsafe bool) http.Handler {
 	key, err := h.configService.SessionKey()
 	if err != nil {
@@ -61,13 +63,14 @@ func (h *uiHandler) Route(unsafe bool) http.Handler {
 	)
 
 	r := mux.NewRouter()
-	r.HandleFunc("/ui/dashboard", h.Authenticated(h.Dashboard()))
-	r.HandleFunc("/ui/certificates", h.Authenticated(h.ListCertificates()))
+	r.HandleFunc("/ui/dashboard", h.Authenticated(h.Dashboard())).Methods("GET")
+	r.HandleFunc("/ui/certificates", h.Authenticated(h.ListCertificates())).Methods("GET")
 	r.HandleFunc("/ui/certificate/id/{id}", h.Authenticated(h.ViewCertificate())).Methods("GET")
 	r.HandleFunc("/ui/certificate/id/{id}/edit", h.Authenticated(h.EditCertificate())).Methods("GET")
 	r.HandleFunc("/ui/certificate/id/{id}/edit", h.Authenticated(h.SaveCertificate())).Methods("POST")
 
-	r.HandleFunc("/ui/certificate/create", h.Authenticated(h.CreateCertificate()))
+	// Handles both viewing create page and handling form action.
+	r.HandleFunc("/ui/certificate/create", h.Authenticated(h.CreateCertificate())).Methods("GET", "POST")
 
 	r.HandleFunc("/ui/login", h.GetLogin()).Methods("GET")
 	r.HandleFunc("/ui/login", h.PostLogin()).Methods("POST")
@@ -76,27 +79,10 @@ func (h *uiHandler) Route(unsafe bool) http.Handler {
 	return CSRF(r)
 }
 
-type headTemplate struct {
-	Title         string
-	CustomCSSFile string
-	CustomJSFile  string
-}
-
-type layoutTemplate struct {
-	Head      headTemplate
-	C         interface{}
-	CSRFField template.HTML
-}
-
-type loginTemplate struct {
-	Head      headTemplate
-	Error     string
-	CSRFField template.HTML
-}
-
+// Authenticated is a middleware that ensures the user is authenticated, otherwise redirects them to the login page.
 func (h *uiHandler) Authenticated(f http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		session, err := h.store.Get(r, CookieName)
+		session, err := h.store.Get(r, cookieName)
 		if err != nil {
 			log.Fatal(err.Error())
 		}
@@ -110,22 +96,28 @@ func (h *uiHandler) Authenticated(f http.HandlerFunc) http.HandlerFunc {
 	}
 }
 
-func (h *uiHandler) GetLogin() http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		session, err := h.store.Get(r, CookieName)
-		if err != nil {
-			log.Fatal(err.Error())
-		}
-
-		// Check if user is authenticated, if so send them to dashboard.
-		if auth, ok := session.Values["authenticated"].(bool); ok && auth {
-			http.Redirect(w, r, "/ui/dashboard", http.StatusTemporaryRedirect)
-			return
-		}
-		h.renderLogin(w, r, "")
-	}
+// layoutTemplate provides needed variables for the overall layout of the page.
+type layoutTemplate struct {
+	Head      headTemplate
+	C         interface{}
+	CSRFField template.HTML
 }
 
+// headTemplate provides needed variables for the html template that renders the <head> portion of the page.
+type headTemplate struct {
+	Title         string
+	CustomCSSFile string
+	CustomJSFile  string
+}
+
+// loginTemplate provides necessary variables for the html template that renders the login page.
+type loginTemplate struct {
+	Head      headTemplate
+	Error     string
+	CSRFField template.HTML
+}
+
+// renderLogin parses the necessary template for the login page given the required variables.
 func (h *uiHandler) renderLogin(w http.ResponseWriter, r *http.Request, uiError string) {
 	t, err := template.ParseGlob("ui/templates/*.html")
 	if err != nil {
@@ -139,6 +131,24 @@ func (h *uiHandler) renderLogin(w http.ResponseWriter, r *http.Request, uiError 
 	}
 }
 
+// GetLogin displays the login page on first request.
+func (h *uiHandler) GetLogin() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		session, err := h.store.Get(r, cookieName)
+		if err != nil {
+			log.Fatal(err.Error())
+		}
+
+		// Check if user is authenticated, if so send them to dashboard.
+		if auth, ok := session.Values["authenticated"].(bool); ok && auth {
+			http.Redirect(w, r, "/ui/dashboard", http.StatusTemporaryRedirect)
+			return
+		}
+		h.renderLogin(w, r, "")
+	}
+}
+
+// PostLogin handles authentication and either redirects to dashboard or shows error to login page.
 func (h *uiHandler) PostLogin() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		username := r.FormValue("username")
@@ -174,7 +184,7 @@ func (h *uiHandler) PostLogin() http.HandlerFunc {
 			return
 		}
 
-		session, err := h.store.Get(r, CookieName)
+		session, err := h.store.Get(r, cookieName)
 		if err != nil {
 			log.Fatal(err.Error())
 		}
@@ -188,10 +198,11 @@ func (h *uiHandler) PostLogin() http.HandlerFunc {
 	}
 }
 
+// Logout unauthenticates a user and redirects to login page.
 func (h *uiHandler) Logout() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 
-		session, err := h.store.Get(r, CookieName)
+		session, err := h.store.Get(r, cookieName)
 		if err != nil {
 			log.Fatal(err.Error())
 		}
@@ -204,6 +215,7 @@ func (h *uiHandler) Logout() http.HandlerFunc {
 	}
 }
 
+// dashboardTemplate stores necessary variables for the html template
 type dashboardTemplate struct {
 	TotalCerts        int
 	TotalRenewedCerts int
@@ -236,6 +248,7 @@ func (h *uiHandler) Dashboard() http.HandlerFunc {
 	}
 }
 
+// createCertTemplate holds variables for html template that renders the cert create page.
 type createCertTemplate struct {
 	Domains    string
 	RenewAt    string
@@ -244,6 +257,7 @@ type createCertTemplate struct {
 	Validation certValidation
 }
 
+// certValidation holds any UI error strings that will need to be rendered if Creation fails.
 type certValidation struct {
 	Domains string
 	RenewAt string
@@ -252,7 +266,7 @@ type certValidation struct {
 	Error   string
 }
 
-// Serve /ui/certificate/{id} page.
+// Serve /ui/certificate/create page.
 func (h *uiHandler) CreateCertificate() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		if r.Method == "POST" {
@@ -341,11 +355,12 @@ func (h *uiHandler) renderCreateCertificate(w http.ResponseWriter, r *http.Reque
 	}
 }
 
+// certTemplate holds the cert variable being rendered for the html template.
 type certTemplate struct {
 	Cert *model.Certificate
 }
 
-// Serve /ui/certificate/{id} page.
+// Serve /ui/certificate/id/{id} page.
 func (h *uiHandler) ViewCertificate() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		files := []string{
@@ -390,7 +405,7 @@ func (h *uiHandler) ViewCertificate() http.HandlerFunc {
 	}
 }
 
-// Serve /ui/cert/{id}/edit page.
+// Serve /ui/certificate/id/{id}/edit page.
 func (h *uiHandler) SaveCertificate() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		domains := r.FormValue("domains")
@@ -440,6 +455,7 @@ func (h *uiHandler) SaveCertificate() http.HandlerFunc {
 	}
 }
 
+// editCertTemplate holds the variables for the html template that shows the cert edit page.
 type editCertTemplate struct {
 	ID         string
 	CommonName string
@@ -449,7 +465,7 @@ type editCertTemplate struct {
 	Validation certValidation
 }
 
-// Serve /ui/cert/{id}/edit page.
+// Serve /ui/certificate/id/{id}/edit page.
 func (h *uiHandler) EditCertificate() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		cv := certValidation{}
@@ -513,42 +529,12 @@ func (h *uiHandler) renderCertificate(w http.ResponseWriter, r *http.Request, cv
 	}
 }
 
-var loadedHot bool
-var hotHost string
-
-// Prepend a given asset path with the appropriate HMR url if available
-func (h *uiHandler) mix(asset string) string {
-	if loadedHot == false {
-		// Memoize the fact that we've loaded early
-		loadedHot = true
-
-		// Resolve the CWD
-		dir, err := os.Getwd()
-		if err != nil {
-			log.Fatal(err)
-		}
-
-		// Resolve the contents of the hot file
-		host, err := ioutil.ReadFile(dir + "/static/hot")
-		if err == nil {
-			hotHost = strings.TrimSpace(string(host))
-		}
-	}
-
-	// If we actually have a hothost defined, prepend it to the given asset
-	if hotHost != "" {
-		return hotHost + asset
-	}
-
-	// Otherwise prepend the static directory
-	return "/static" + asset
-}
-
+// certListTemplate holds all certificates for parsing into html template.
 type certListTemplate struct {
 	Certs []*model.Certificate
 }
 
-// Serve /ui/cert page.
+// Serve /ui/certificates page.
 func (h *uiHandler) ListCertificates() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		files := []string{
@@ -590,4 +576,35 @@ func (h *uiHandler) ListCertificates() http.HandlerFunc {
 			log.Print(err.Error())
 		}
 	}
+}
+
+var loadedHot bool
+var hotHost string
+
+// Prepend a given asset path with the appropriate HMR url if available
+func (h *uiHandler) mix(asset string) string {
+	if loadedHot == false {
+		// Memoize the fact that we've loaded early
+		loadedHot = true
+
+		// Resolve the CWD
+		dir, err := os.Getwd()
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		// Resolve the contents of the hot file
+		host, err := ioutil.ReadFile(dir + "/static/hot")
+		if err == nil {
+			hotHost = strings.TrimSpace(string(host))
+		}
+	}
+
+	// If we actually have a hothost defined, prepend it to the given asset
+	if hotHost != "" {
+		return hotHost + asset
+	}
+
+	// Otherwise prepend the static directory
+	return "/static" + asset
 }

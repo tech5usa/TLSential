@@ -24,6 +24,7 @@ import (
 const cookieName = "tlsential"
 
 // Handler provides an interface for all ui/calls.
+// TODO: Rename to Router or make method Handle. A Router should Route, etc.
 type Handler interface {
 	Route(bool) http.Handler
 }

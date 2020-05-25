@@ -69,6 +69,7 @@ func (h *uiHandler) Route(unsafe bool) http.Handler {
 	r.HandleFunc("/ui/certificate/id/{id}", h.Authenticated(h.ViewCertificate())).Methods("GET")
 	r.HandleFunc("/ui/certificate/id/{id}/edit", h.Authenticated(h.EditCertificate())).Methods("GET")
 	r.HandleFunc("/ui/certificate/id/{id}/edit", h.Authenticated(h.SaveCertificate())).Methods("POST")
+	r.HandleFunc("/ui/certificate/id/{id}/delete", h.Authenticated(h.DeleteCertificate())).Methods("GET", "POST")
 
 	// Handles both viewing create page and handling form action.
 	r.HandleFunc("/ui/certificate/create", h.Authenticated(h.CreateCertificate())).Methods("GET", "POST")
@@ -576,6 +577,85 @@ func (h *uiHandler) ListCertificates() http.HandlerFunc {
 		if err != nil {
 			log.Print(err.Error())
 		}
+	}
+}
+
+// deleteCertTemplate holds variables for html template that renders the cert delete page.
+type deleteCertTemplate struct {
+	ID         string
+	CommonName string
+	CSRFField  template.HTML
+}
+
+// Serve /ui/certificate/create page.
+func (h *uiHandler) DeleteCertificate() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		if r.Method == "POST" {
+			id := mux.Vars(r)["id"]
+			err := h.certificateService.DeleteCert(id)
+			if err != nil {
+				log.Print(err.Error())
+				http.Error(w, "schucks", http.StatusInternalServerError)
+				return
+			}
+
+			http.Redirect(w, r, "/ui/certificates", http.StatusSeeOther)
+			return
+		}
+		h.renderDeleteCertificate(w, r)
+	}
+}
+
+func (h *uiHandler) renderDeleteCertificate(w http.ResponseWriter, r *http.Request) {
+	files := []string{
+		"ui/templates/layout.html",
+		"ui/templates/head.html",
+		"ui/templates/footer.html",
+		"ui/templates/delete_certificate.html",
+	}
+
+	t, err := template.ParseFiles(files...)
+	if err != nil {
+		log.Print(err.Error())
+		http.Error(w, "phooey", http.StatusInternalServerError)
+		return
+	}
+
+	id := mux.Vars(r)["id"]
+
+	cert, err := h.certificateService.Cert(id)
+	if err != nil {
+		log.Print(err.Error())
+		http.Error(w, "gosh darn", http.StatusInternalServerError)
+		return
+	}
+
+	if cert == nil {
+		http.Error(w, "Not found.", http.StatusNotFound)
+		return
+	}
+
+	p := deleteCertTemplate{
+		ID:         cert.ID,
+		CommonName: cert.CommonName,
+		CSRFField:  csrf.TemplateField(r),
+	}
+
+	head := headTemplate{
+		fmt.Sprintf("Delete Certificate"),
+		h.mix("/css/site.css"),
+		h.mix("/js/site.js"),
+	}
+
+	l := layoutTemplate{
+		head,
+		p,
+		csrf.TemplateField(r),
+	}
+
+	err = t.ExecuteTemplate(w, "layout", l)
+	if err != nil {
+		log.Print(err.Error())
 	}
 }
 

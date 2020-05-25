@@ -1,0 +1,19 @@
+{{define "content"}}
+
+<div class="container">
+    <h2 class="tls-title">Delete {{.CommonName}}?</h2>
+    <div class="tls-form">
+        <a href="/ui/certificate/id/{{.ID}}/"><button class="btn btn-outline-primary">Cancel</button></a>
+        <form enctype="multipart/form-data" class="form-horizontal needs-validation" novalidate
+            action="/ui/certificate/id/{{.ID}}/delete" method="POST" novalidate>
+            <input id="id" id="name" value="{{.ID}}" hidden />
+            {{.CSRFField}}
+
+            <button class="btn btn-danger" type="submit" id="submit-form">Delete</button>
+            <button style="display:none;" id="form-working-message" class="btn btn-primary" disabled><i
+                    class="fas fa-spinner glyphicon-spin"></i> Loading...</button>
+        </form>
+
+    </div>
+</div>
+{{end}}

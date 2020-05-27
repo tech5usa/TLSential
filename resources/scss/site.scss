@@ -208,3 +208,19 @@ background-color: $light;
       transform: rotate(359deg);
   }
 }
+
+.modal-footer {
+  background: $light;
+}
+
+.modal-header {
+  background: $light;
+}
+
+.modal {
+  z-index: 1081 !important;
+}
+
+.modal-backdrop {
+  z-index: 1080 !important;
+}

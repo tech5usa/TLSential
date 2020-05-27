@@ -74,23 +74,20 @@
 
     function certDeleteConfirmed(id) {
         var url = "/ui/certificate/id/" + id + "/delete";
-        $.ajax({
+        $.ajax(url,{
             url: url,
             type: 'POST',
-            dataType: 'json',
+            dataType: 'html',
             // data: { token: id }, //could send token here if the other funtion doen't work
             contentType: "application/x-www-form-urlencoded",
-            accepts: {
-                text: "application/json"
-            },
             success: function (result) {
                 token = result;
-                $("cert-row-1" + id).remove();
+                $("#cert-row-" + id).remove();
                 $("#tls-delete-modal").modal('hide');
             },
-            error: function (passParams) {
+            error: function (passParams,status, err) {
                 console.log("Error in certDeleteConfirmed ajax call.");
-                console.log(passParams);
+                console.log(passParams,status,err);
             }
         });
 

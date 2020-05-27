@@ -554,14 +554,8 @@ func (h *uiHandler) DeleteCertificate() http.HandlerFunc {
 }
 
 func (h *uiHandler) renderDeleteCertificate(w http.ResponseWriter, r *http.Request) {
-	files := []string{
-		"ui/templates/layout.html",
-		"ui/templates/head.html",
-		"ui/templates/footer.html",
-		"ui/templates/delete_certificate.html",
-	}
 
-	t, err := template.ParseFiles(files...)
+	t, err := template.ParseFiles("ui/templates/delete_certificate.html")
 	if err != nil {
 		log.Print(err.Error())
 		http.Error(w, "phooey", http.StatusInternalServerError)
@@ -588,19 +582,7 @@ func (h *uiHandler) renderDeleteCertificate(w http.ResponseWriter, r *http.Reque
 		CSRFField:  csrf.TemplateField(r),
 	}
 
-	head := headTemplate{
-		fmt.Sprintf("Delete Certificate"),
-		h.mix("/css/site.css"),
-		h.mix("/js/site.js"),
-	}
-
-	l := layoutTemplate{
-		head,
-		p,
-		csrf.TemplateField(r),
-	}
-
-	err = t.ExecuteTemplate(w, "layout", l)
+	err = renderLayout(t, "Delete Certificate", p, w, r)
 	if err != nil {
 		log.Print(err.Error())
 	}

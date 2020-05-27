@@ -24,6 +24,7 @@ import (
 const cookieName = "tlsential"
 
 // Handler provides an interface for all ui/calls.
+// TODO: Rename to Router or make method Handle. A Router should Route, etc.
 type Handler interface {
 	Route(bool) http.Handler
 }
@@ -68,6 +69,7 @@ func (h *uiHandler) Route(unsafe bool) http.Handler {
 	r.HandleFunc("/ui/certificate/id/{id}", h.Authenticated(h.ViewCertificate())).Methods("GET")
 	r.HandleFunc("/ui/certificate/id/{id}/edit", h.Authenticated(h.EditCertificate())).Methods("GET")
 	r.HandleFunc("/ui/certificate/id/{id}/edit", h.Authenticated(h.SaveCertificate())).Methods("POST")
+	r.HandleFunc("/ui/certificate/id/{id}/delete", h.Authenticated(h.DeleteCertificate())).Methods("GET", "POST")
 
 	// Handles both viewing create page and handling form action.
 	r.HandleFunc("/ui/certificate/create", h.Authenticated(h.CreateCertificate())).Methods("GET", "POST")
@@ -123,7 +125,7 @@ func (h *uiHandler) renderLogin(w http.ResponseWriter, r *http.Request, uiError 
 	if err != nil {
 		log.Print(err.Error())
 	}
-	head := headTemplate{"Login", h.mix("/css/site.css"), h.mix("/js/site.js")}
+	head := headTemplate{"Login", mix("/css/site.css"), mix("/js/site.js")}
 	p := loginTemplate{head, uiError, csrf.TemplateField(r)}
 	err = t.ExecuteTemplate(w, "login", p)
 	if err != nil {
@@ -215,6 +217,21 @@ func (h *uiHandler) Logout() http.HandlerFunc {
 	}
 }
 
+func renderLayout(t *template.Template, title string, C interface{}, w http.ResponseWriter, r *http.Request) error {
+	t, err := t.ParseFiles("ui/templates/layout.html", "ui/templates/head.html", "ui/templates/footer.html")
+
+	if err != nil {
+		return err
+	}
+
+	head := headTemplate{title, mix("/css/site.css"), mix("/js/site.js")}
+
+	l := layoutTemplate{head, C, csrf.TemplateField(r)}
+
+	return t.ExecuteTemplate(w, "layout", l)
+
+}
+
 // dashboardTemplate stores necessary variables for the html template
 type dashboardTemplate struct {
 	TotalCerts        int
@@ -225,23 +242,17 @@ type dashboardTemplate struct {
 // Serve /ui/dashboard page.
 func (h *uiHandler) Dashboard() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		files := []string{
-			"ui/templates/layout.html",
-			"ui/templates/head.html",
-			"ui/templates/footer.html",
-			"ui/templates/dashboard.html",
-		}
-		t, err := template.ParseFiles(files...)
+
+		t, err := template.ParseFiles("ui/templates/dashboard.html")
+
 		if err != nil {
 			log.Print(err.Error())
 		}
-		head := headTemplate{"Dashboard", h.mix("/css/site.css"), h.mix("/js/site.js")}
 
-		// TODO: Fill out appropriate data for cert, renewed cert, and domain counts.
 		d := dashboardTemplate{4, 20, 69}
-		l := layoutTemplate{head, d, csrf.TemplateField(r)}
 
-		err = t.ExecuteTemplate(w, "layout", l)
+		err = renderLayout(t, "Dashboard", d, w, r)
+
 		if err != nil {
 			log.Print(err.Error())
 		}
@@ -316,23 +327,12 @@ func (h *uiHandler) CreateCertificate() http.HandlerFunc {
 }
 
 func (h *uiHandler) renderCreateCertificate(w http.ResponseWriter, r *http.Request, cv certValidation) {
-	files := []string{
-		"ui/templates/layout.html",
-		"ui/templates/head.html",
-		"ui/templates/footer.html",
-		"ui/templates/create_certificate.html",
-	}
-	t, err := template.ParseFiles(files...)
+
+	t, err := template.ParseFiles("ui/templates/create_certificate.html")
 	if err != nil {
 		log.Print(err.Error())
 		http.Error(w, "oh boyyyy :(", http.StatusInternalServerError)
 		return
-	}
-
-	head := headTemplate{
-		fmt.Sprintf("Create New Certificate"),
-		h.mix("/css/site.css"),
-		h.mix("/js/site.js"),
 	}
 
 	p := createCertTemplate{
@@ -343,13 +343,7 @@ func (h *uiHandler) renderCreateCertificate(w http.ResponseWriter, r *http.Reque
 		Validation: cv,
 	}
 
-	l := layoutTemplate{
-		head,
-		p,
-		csrf.TemplateField(r),
-	}
-
-	err = t.ExecuteTemplate(w, "layout", l)
+	err = renderLayout(t, "Create New Certificate", p, w, r)
 	if err != nil {
 		log.Print(err.Error())
 	}
@@ -363,13 +357,8 @@ type certTemplate struct {
 // Serve /ui/certificate/id/{id} page.
 func (h *uiHandler) ViewCertificate() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		files := []string{
-			"ui/templates/layout.html",
-			"ui/templates/head.html",
-			"ui/templates/footer.html",
-			"ui/templates/view_certificate.html",
-		}
-		t, err := template.ParseFiles(files...)
+
+		t, err := template.ParseFiles("ui/templates/view_certificate.html")
 		if err != nil {
 			log.Print(err.Error())
 			http.Error(w, "drats", http.StatusInternalServerError)
@@ -385,20 +374,11 @@ func (h *uiHandler) ViewCertificate() http.HandlerFunc {
 			return
 		}
 
-		head := headTemplate{
-			fmt.Sprintf("Certificate - %s", cert.CommonName),
-			h.mix("/css/site.css"),
-			h.mix("/js/site.js"),
-		}
 		p := certTemplate{
 			cert,
 		}
-		l := layoutTemplate{
-			head,
-			p,
-			csrf.TemplateField(r),
-		}
-		err = t.ExecuteTemplate(w, "layout", l)
+
+		err = renderLayout(t, fmt.Sprintf("Certificate - %s", cert.CommonName), p, w, r)
 		if err != nil {
 			log.Print(err.Error())
 		}
@@ -474,13 +454,8 @@ func (h *uiHandler) EditCertificate() http.HandlerFunc {
 }
 
 func (h *uiHandler) renderCertificate(w http.ResponseWriter, r *http.Request, cv certValidation) {
-	files := []string{
-		"ui/templates/layout.html",
-		"ui/templates/head.html",
-		"ui/templates/footer.html",
-		"ui/templates/edit_certificate.html",
-	}
-	t, err := template.ParseFiles(files...)
+
+	t, err := template.ParseFiles("ui/templates/edit_certificate.html")
 	if err != nil {
 		log.Print(err.Error())
 		http.Error(w, "drats", http.StatusInternalServerError)
@@ -501,12 +476,6 @@ func (h *uiHandler) renderCertificate(w http.ResponseWriter, r *http.Request, cv
 		return
 	}
 
-	head := headTemplate{
-		fmt.Sprintf("Certificate - %s", cert.CommonName),
-		h.mix("/css/site.css"),
-		h.mix("/js/site.js"),
-	}
-
 	domains := strings.Join(cert.Domains, ",")
 	p := editCertTemplate{
 		ID:         cert.ID,
@@ -517,13 +486,8 @@ func (h *uiHandler) renderCertificate(w http.ResponseWriter, r *http.Request, cv
 		Validation: cv,
 	}
 
-	l := layoutTemplate{
-		head,
-		p,
-		csrf.TemplateField(r),
-	}
+	err = renderLayout(t, fmt.Sprintf("Certificate - %s", cert.CommonName), p, w, r)
 
-	err = t.ExecuteTemplate(w, "layout", l)
 	if err != nil {
 		log.Print(err.Error())
 	}
@@ -537,13 +501,8 @@ type certListTemplate struct {
 // Serve /ui/certificates page.
 func (h *uiHandler) ListCertificates() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		files := []string{
-			"ui/templates/layout.html",
-			"ui/templates/head.html",
-			"ui/templates/footer.html",
-			"ui/templates/certificates.html",
-		}
-		t, err := template.ParseFiles(files...)
+
+		t, err := template.ParseFiles("ui/templates/certificates.html")
 		if err != nil {
 			log.Print(err.Error())
 			http.Error(w, "uh oh", http.StatusInternalServerError)
@@ -557,24 +516,75 @@ func (h *uiHandler) ListCertificates() http.HandlerFunc {
 			return
 		}
 
-		head := headTemplate{
-			"Certificates",
-			h.mix("/css/site.css"),
-			h.mix("/js/site.js"),
-		}
-
 		p := certListTemplate{
 			certs,
 		}
-		l := layoutTemplate{
-			head,
-			p,
-			csrf.TemplateField(r),
-		}
-		err = t.ExecuteTemplate(w, "layout", l)
+
+		err = renderLayout(t, "Certificates", p, w, r)
 		if err != nil {
 			log.Print(err.Error())
 		}
+	}
+}
+
+// deleteCertTemplate holds variables for html template that renders the cert delete page.
+type deleteCertTemplate struct {
+	ID         string
+	CommonName string
+	CSRFField  template.HTML
+}
+
+// Serve /ui/certificate/create page.
+func (h *uiHandler) DeleteCertificate() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		if r.Method == "POST" {
+			id := mux.Vars(r)["id"]
+			err := h.certificateService.DeleteCert(id)
+			if err != nil {
+				log.Print(err.Error())
+				http.Error(w, "schucks", http.StatusInternalServerError)
+				return
+			}
+
+			http.Redirect(w, r, "/ui/certificates", http.StatusSeeOther)
+			return
+		}
+		h.renderDeleteCertificate(w, r)
+	}
+}
+
+func (h *uiHandler) renderDeleteCertificate(w http.ResponseWriter, r *http.Request) {
+
+	t, err := template.ParseFiles("ui/templates/delete_certificate.html")
+	if err != nil {
+		log.Print(err.Error())
+		http.Error(w, "phooey", http.StatusInternalServerError)
+		return
+	}
+
+	id := mux.Vars(r)["id"]
+
+	cert, err := h.certificateService.Cert(id)
+	if err != nil {
+		log.Print(err.Error())
+		http.Error(w, "gosh darn", http.StatusInternalServerError)
+		return
+	}
+
+	if cert == nil {
+		http.Error(w, "Not found.", http.StatusNotFound)
+		return
+	}
+
+	p := deleteCertTemplate{
+		ID:         cert.ID,
+		CommonName: cert.CommonName,
+		CSRFField:  csrf.TemplateField(r),
+	}
+
+	err = renderLayout(t, "Delete Certificate", p, w, r)
+	if err != nil {
+		log.Print(err.Error())
 	}
 }
 
@@ -582,7 +592,7 @@ var loadedHot bool
 var hotHost string
 
 // Prepend a given asset path with the appropriate HMR url if available
-func (h *uiHandler) mix(asset string) string {
+func mix(asset string) string {
 	if loadedHot == false {
 		// Memoize the fact that we've loaded early
 		loadedHot = true

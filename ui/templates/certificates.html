@@ -76,7 +76,7 @@
 
     function certDeleteConfirmed(id) {
         var url = "/ui/certificate/id/" + id + "/delete";
-        $("#delete-btn").hide()
+        $("#delete-btn").hide();
         $("#form-working-message").show();
         $.ajax(url,{
             url: url,
@@ -89,13 +89,13 @@
                 $("#cert-row-" + id).remove();
                 $("#tls-delete-modal").modal('hide');
                 $("#form-working-message").hide();
-                $("#delte-btn").show()
+                $("#delete-btn").show()
             },
             error: function (passParams,status, err) {
                 console.log("Error in certDeleteConfirmed ajax call.");
                 console.log(passParams,status,err);
                 $("#form-working-message").hide();
-                $("#delte-btn").show()
+                $("#delete-btn").show()
             }
         });
 

@@ -54,7 +54,7 @@
             <div class="col-12">
               <h6 title="Secret" class="float-right" data-toggle="tooltip" data-placement="bottom">
                 <label class="text-muted font-weight-normal">Secret:</label>
-                  <txt id="secrect-value">{{.Cert.Secret}}</a>
+                  <txt id="secret-value">{{.Cert.Secret}}</txt>
               </h6>
             </div>
           </div>
@@ -126,7 +126,7 @@
   <script>
     window.onload = function () {
       $("#secret-spot").click(function () {
-        var secret = $("#secrect-value").html();
+        var secret = $("#secret-value").html();
         navigator.clipboard.writeText(secret).then(function () {
           $("#secret-spot").html("Copied!");
           setTimeout(function(){ 

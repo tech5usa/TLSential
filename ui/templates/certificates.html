@@ -65,6 +65,7 @@
             jqXHR.setRequestHeader('X-CSRF-Token', token);
         });
     }
+
     function certDeleteModal(id, name) {
         $("#cert-delete-name").html(name);
         $("#delete-btn").attr("href", "javascript:certDeleteConfirmed('" + id + "')");
@@ -73,12 +74,23 @@
 
     function certDeleteConfirmed(id) {
         var url = "/ui/certificate/id/" + id + "/delete";
-
-        getJSON(url).then(function (jsonData) {
-            token = jsonData;
-            $("cert-row-1" + id).remove();
-            $("#tls-delete-modal").modal('hide');
+        $.ajax({
+            url: url,
+            type: 'POST',
+            dataType: 'JSON',
+            // data: { token: id }, //could send token here if the other funtion doen't work
+            contentType: "application/x-www-form-urlencoded",
+            success: function (result) {
+                token = result;
+                $("cert-row-1" + id).remove();
+                $("#tls-delete-modal").modal('hide');
+            },
+            error: function (passParams) {
+                console.log("Error in certDeleteConfirmed ajax call.");
+                console.log(passParams);
+            }
         });
+
     }
 </script>
 {{end}}

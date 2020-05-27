@@ -18147,56 +18147,11 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var _jquery__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./jquery */ "./resources/js/jquery.ts");
 /* harmony import */ var _example_contentjs__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./example-contentjs */ "./resources/js/example-contentjs.js");
 /* harmony import */ var _example_contentjs__WEBPACK_IMPORTED_MODULE_2___default = /*#__PURE__*/__webpack_require__.n(_example_contentjs__WEBPACK_IMPORTED_MODULE_2__);
-/* harmony import */ var _promise__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ./promise */ "./resources/js/promise.js");
-/* harmony import */ var _promise__WEBPACK_IMPORTED_MODULE_3___default = /*#__PURE__*/__webpack_require__.n(_promise__WEBPACK_IMPORTED_MODULE_3__);
 
 
 
+// import './promise'
 
-
-
-/***/ }),
-
-/***/ "./resources/js/promise.js":
-/*!*********************************!*\
-  !*** ./resources/js/promise.js ***!
-  \*********************************/
-/*! no static exports found */
-/***/ (function(module, exports) {
-
-function get(url) {
-  // Return a new promise.
-  return new Promise(function (resolve, reject) {
-    // Do the usual XHR stuff
-    var req = new XMLHttpRequest();
-    req.open('GET', url);
-
-    req.onload = function () {
-      // This is called even on 404 etc
-      // so check the status
-      if (req.status === 200) {
-        // Resolve the promise with the response text
-        resolve(req.response);
-      } else {
-        // Otherwise reject with the status text
-        // which will hopefully be a meaningful error
-        reject(Error(req.statusText));
-      }
-    }; // Handle network errors
-
-
-    req.onerror = function () {
-      reject(Error("Network Error"));
-    }; // Make the request
-
-
-    req.send();
-  });
-}
-
-function getJSON(url) {
-  return get(url).then(JSON.parse);
-}
 
 /***/ }),
 

@@ -3,4 +3,4 @@ import './jquery'
 
 import './example-contentjs'
 
-import './promise'
+// import './promise'

@@ -77,9 +77,12 @@
         $.ajax({
             url: url,
             type: 'POST',
-            dataType: 'JSON',
+            dataType: 'json',
             // data: { token: id }, //could send token here if the other funtion doen't work
             contentType: "application/x-www-form-urlencoded",
+            accepts: {
+                text: "application/json"
+            },
             success: function (result) {
                 token = result;
                 $("cert-row-1" + id).remove();

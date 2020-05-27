@@ -11124,3 +11124,19 @@ background-color: $light;
   }
 }
 
+.modal-footer {
+  background: #f8f9fa;
+}
+
+.modal-header {
+  background: #f8f9fa;
+}
+
+.modal {
+  z-index: 1081 !important;
+}
+
+.modal-backdrop {
+  z-index: 1080 !important;
+}
+

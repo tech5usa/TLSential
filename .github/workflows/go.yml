@@ -37,7 +37,7 @@ jobs:
       run: go test -v ./...
     
     - name: Run Service
-      run: ./TLSential -no-https -port 8080
+      run: ./bg.sh
       
     - name: Run Newman
       uses: matt-ball/newman-action@master

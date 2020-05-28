@@ -1,0 +1,44 @@
+{{define "content"}}
+
+<h2 class="tls-title">{{.Name}}</h2>
+
+<div class="tls-page">
+  <div class="row">
+    <div class="col-12 order-md-1">
+      <div class="row border-bottom pb-1">
+        <div class="col-8">
+          <h4 class="mb-2 ">Details</h4>
+        </div>
+        <div class="col-4">
+          <a data-toggle="tooltip" data-placement="bottom" class="table-icon text-danger float-right pr-3"
+            title="Delete user" href="/ui/user/id/{{ .Name }}/delete">
+            <i class="fas fa-trash"></i>
+          </a>
+          <a data-toggle="tooltip" data-placement="bottom" class="table-icon text-primary float-right pl-3"
+            title="Edit user" href="/ui/user/id/{{ .Name }}/edit"><i class="fas fa-pencil-alt"></i>
+          </a>
+
+        </div>
+      </div>
+      <div class="row mt-2">
+
+        <div class="col-md-6 col-12 mb-3">
+          <h6 title="Name" data-toggle="tooltip" data-placement="bottom">
+            <label class="text-muted font-weight-normal">Name:</label>
+            <txt>{{.Name}}</txt>
+          </h6>
+        </div>
+        <div class="col-md-6 col-12 mb-3">
+          <div class="row">
+            <div class="col-12">
+              <h6 title="Role" class="float-right" data-toggle="tooltip" data-placement="bottom">
+                <label class="text-muted font-weight-normal">Role:</label>
+                  <txt id="secret-value">{{.Role}}</txt>
+              </h6>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  {{end}}

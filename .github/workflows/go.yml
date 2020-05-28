@@ -10,7 +10,8 @@ jobs:
 
   build:
     name: Build
-    runs-on: ubuntu-latest
+    container:
+      image: pwnlandia/go-newman:latest
     steps:
 
     - name: Set up Go 1.x
@@ -35,3 +36,14 @@ jobs:
 
     - name: Test
       run: go test -v ./...
+    
+    - name: Run Service
+      run: ./TLSential -no-https -port 8080
+      
+    - name: Run Newman
+      uses: matt-ball/newman-action@master
+      with:
+        collection: TLSential.postman_collection.json
+        environment: TLSential.postman_environment.json
+      
+      

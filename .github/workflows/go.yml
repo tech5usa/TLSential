@@ -37,7 +37,7 @@ jobs:
       run: go test -v ./...
     
     - name: Run Service
-      run: ./bg.sh
+      run: sh ./bg.sh
       
     - name: Run Newman
       uses: matt-ball/newman-action@master

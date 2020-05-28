@@ -40,7 +40,7 @@ jobs:
       run: sh ./bg.sh
       
     - name: Run Newman
-      uses: matt-ball/newman-action@master
+      uses: d1str0/newman-action@master
       with:
         collection: TLSential.postman_collection.json
         environment: TLSential.postman_environment.json

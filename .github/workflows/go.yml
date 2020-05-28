@@ -10,8 +10,7 @@ jobs:
 
   build:
     name: Build
-    container:
-      image: pwnlandia/go-newman:latest
+    runs-on: pwnlandia/go-newman:latest
     steps:
 
     - name: Set up Go 1.x

@@ -3,13 +3,17 @@ TLSential is a server for providing short-lived, non-wildcard domains to all ser
 
 [![<ImageWare>](https://circleci.com/gh/ImageWare/TLSential.svg?style=svg)](https://app.circleci.com/pipelines/github/ImageWare/TLSential/)
 
+# Why?
+
+[Why.](https://github.com/ImageWare/TLSential/wiki/Why%3F)
+
 # Building
 
 Clone the repo. From the root directory, run `go build`. You should now have a binary in the root directory, `TLSential`.
 
 # Running TLSential
 
-You can run it with the default settings by executing `./TLSential from the root directory.
+You can run it with the default settings by executing `./TLSential` from the root directory.
 
 When developing, you will most likely run `./TLSential --no-https --port 8080`
 
@@ -27,7 +31,7 @@ To build assets with hot reloading (You need to use the domain outputted in the 
 ```npm run hot```
 
 !! Note after starting the HMR hot reloading server you must restart the TLSential process on a port other than 8080:
-```go build && ./TLSential.exe --port 8000 --no-https```\
+```go build && ./TLSential.exe --port 8000 --no-https```
 
 !! Note 2 Once you're done with hot reloading you will need to rebuild for dev or prod to see your changes. This is because you need to rebuild assets and restart TLSential to clear out the hot config file
 

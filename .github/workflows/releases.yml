@@ -1,3 +1,5 @@
+name: Releases
+
 on:
   push:
     # Sequence of patterns matched against refs/tags

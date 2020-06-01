@@ -1,0 +1,53 @@
+{{define "content"}}
+{{if ne .Validation.Success ""}}
+<div class="alert alert-success alert-dismissible fade show" role="alert">
+  <strong>Success.</strong> {{.Validation.Success}}
+  <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+    <span aria-hidden="true">&times;</span>
+  </button>
+</div>
+
+{{end}}
+{{if ne .Validation.Error ""}}
+<div class="alert alert-danger alert-dismissible fade show" role="alert">
+  <strong>Error.</strong> {{.Validation.Error}}
+  <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+    <span aria-hidden="true">&times;</span>
+  </button>
+</div>
+{{end}}
+<div class="container">
+  <h2 class="tls-title">Edit {{.Name}}</h2>
+  <div class="tls-form">
+    <form enctype="multipart/form-data" class="form-horizontal needs-validation" novalidate
+      action="/ui/user/id/{{.Name}}/edit" method="POST" novalidate>
+      <input id="id" id="name" value="{{.Name}}" hidden />
+      {{.CSRFField}}
+
+      <div class="form-row">
+        <div class="form-group col-lg-6 col-12">
+          <label for="commonName">Name</label>
+          <input type="text" class="form-control" id="commonName" placeholder="" value="{{.Name}}" readonly>
+        </div>
+        <div class="form-group col-lg-6 col-12">
+          <label for="role">Role</label>
+          <div class="input-group">
+            <input type="text" class="form-control" id="role" placeholder="" name="role" value="{{.Role}}"
+              type="number">
+          </div>
+          {{if ne .Validation.Role ""}}
+          <div class="invalid-feedback" style="display: block;">
+            {{.Validation.Role}}
+          </div>
+          {{end}}
+        </div>
+      </div>
+
+      <button class="btn btn-primary" type="submit" id="submit-form">Save</button>
+      <button style="display:none;" id="form-working-message" class="btn btn-primary" disabled><i
+          class="fas fa-spinner glyphicon-spin"></i> Loading...</button>
+    </form>
+
+  </div>
+</div>
+{{end}}

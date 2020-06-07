@@ -3,7 +3,6 @@
 
 
 <h2 class="tls-title">{{.Cert.CommonName}}</h2>
-
 <div class="tls-page">
   <div class="row">
     <div class="col-12 order-md-1">
@@ -101,7 +100,24 @@
 
         </div>
       </div>
-
+      <div class="row border-top">
+        <div class="col-12 pt-2">
+          <h6 class="float-left" >
+            <label class="text-muted font-weight-normal">Get private key shell script:</label><p></p>
+              <code><pre><samp id="curl-command-elem"></samp></pre></code>
+              <a class="clip-copy" id="curl-command-elem-clicky" data-copy-source="#curl-command-elem" href="#" class="float-right text-decoration-none">Copy command</a>
+          </h6>
+        </div>
+      </div>
+      <div class="row border-top">
+        <div class="col-12 pt-2">
+          <h6 class="float-left" >
+            <label class="text-muted font-weight-normal">Get cert shell script:</label><p></p>
+              <code><pre><samp id="cert-curl-command-elem"></samp></pre></code>
+              <a class="clip-copy" data-copy-source="#cert-curl-command-elem" href="#" class="float-right text-decoration-none">Copy command</a>
+          </h6>
+        </div>
+      </div>
     </div>
   </div>
   <script>
@@ -119,6 +135,17 @@
           console.log("There was an error trying to copy to the users clipboard.");
         });
       });
+      //Store the id in a variable because when we use {{.Cert.ID}} in the string directly it gets surrounded by double quotes for some reason
+      var id = "{{.Cert.ID}}";
+
+      $("#curl-command-elem").html(`curl ${window.location.origin}/api/certificate/${id}/privkey -H"Authorization: Secret {{ .Cert.Secret }}"`);
+      $("#cert-curl-command-elem").html(`curl ${window.location.origin}/api/certificate/${id}/cert`);
+
+
+      $(".clip-copy").click(function(e){
+        navigator.clipboard.writeText($(e.target.attributes.getNamedItem("data-copy-source").value).html());
+      })
+
     }
 
   </script>

@@ -160,6 +160,7 @@ func (s *acmeService) Trigger(id string) {
 func (s *acmeService) Renew(c *model.Certificate) {
 	if !c.Issued {
 		s.Trigger(c.ID)
+		return
 	}
 	config := lego.NewConfig(c)
 

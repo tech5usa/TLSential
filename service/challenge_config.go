@@ -1,6 +1,8 @@
 package service
 
 import (
+	"time"
+
 	"github.com/ImageWare/TLSential/challenge_config"
 	"github.com/ImageWare/TLSential/model"
 	"github.com/go-acme/lego/v3/challenge"
@@ -17,6 +19,8 @@ func NewChallengeConfigService(r challenge_config.Repository) challenge_config.S
 
 func (s *challengeConfigService) NewDNSProvider() (challenge.Provider, error) {
 	cfConfig := cloudflare.NewDefaultConfig()
+
+	cfConfig.PropagationTimeout = time.Minute * 10
 
 	email, err := s.repo.AuthEmail()
 	cfConfig.AuthEmail = email

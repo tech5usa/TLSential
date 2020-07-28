@@ -158,6 +158,10 @@ func (s *acmeService) Trigger(id string) {
 }
 
 func (s *acmeService) Renew(c *model.Certificate) {
+	if !c.Issued {
+		s.Trigger(c.ID)
+		return
+	}
 	config := lego.NewConfig(c)
 
 	// This CA URL is configured for a local dev instance of Boulder running in Docker in a VM.

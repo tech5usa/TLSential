@@ -1,11 +1,11 @@
 # TLSential
 TLSential is a server for providing short-lived, non-wildcard domains to all services within a firewall restricted network.
 
-[![<ImageWare>](https://circleci.com/gh/ImageWare/TLSential.svg?style=svg)](https://app.circleci.com/pipelines/github/ImageWare/TLSential/)
+[![<Imageware>](https://circleci.com/gh/Imageware/TLSential.svg?style=svg)](https://app.circleci.com/pipelines/github/Imageware/TLSential/)
 
 # Why?
 
-[Why.](https://github.com/ImageWare/TLSential/wiki/Why%3F)
+[Why.](https://github.com/ImageW\ware/TLSential/wiki/Why%3F)
 
 # Building
 

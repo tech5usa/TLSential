@@ -14,8 +14,6 @@ import (
 	"golang.org/x/net/idna"
 
 	"github.com/ImageWare/TLSential/auth"
-	"github.com/go-acme/lego/v3/certcrypto"
-	"github.com/go-acme/lego/v3/lego"
 	"github.com/go-acme/lego/v3/registration"
 	"github.com/segmentio/ksuid"
 )
@@ -108,23 +106,6 @@ func NewCertificate(domains []string, email string) (*Certificate, error) {
 		ACMEEmail:  e.Address,
 		ACMEKey:    privateKey,
 	}
-
-	config := lego.NewConfig(c)
-
-	config.CADirURL = CADirURL
-	config.Certificate.KeyType = certcrypto.RSA2048
-
-	client, err := lego.NewClient(config)
-	if err != nil {
-		return nil, err
-	}
-
-	// TODO: Move this to acme Service so we can mock here
-	reg, err := client.Registration.Register(registration.RegisterOptions{TermsOfServiceAgreed: true})
-	if err != nil {
-		return nil, err
-	}
-	c.ACMERegistration = reg
 
 	return c, nil
 }

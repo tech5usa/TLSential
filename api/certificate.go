@@ -245,6 +245,15 @@ func (h *certHandler) Post() http.HandlerFunc {
 			return
 		}
 
+		reg, err := h.acme.Register(c)
+
+		if err != nil {
+			log.Printf("api CertHandler POST, acme.Register(), %s", err.Error())
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		c.ACMERegistration = reg
+
 		//TODO: Should probably decide valid range for client supplied RenewAt value
 		//For instance we may not want them to be able to specify 0 or less, as that would
 		//cause the cert to never auto renew. Although maybe thats a valid use case?

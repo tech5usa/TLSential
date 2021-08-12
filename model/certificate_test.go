@@ -27,12 +27,6 @@ func TestNewCertificate(t *testing.T) {
 			ErrInvalidDomains.Error(),
 		},
 		{
-			"email at example.com",
-			[]string{"example.com"},
-			"test@example.com",
-			"acme: error: 400 :: POST :: https://acme-v02.api.letsencrypt.org/acme/new-acct :: urn:ietf:params:acme:error:invalidEmail :: Error creating new account :: invalid contact domain. Contact emails @example.com are forbidden, url: ",
-		},
-		{
 			"wildcard domain",
 			[]string{"*.example.com"},
 			"test@notexample.com",
@@ -119,11 +113,6 @@ func TestNewCertificate(t *testing.T) {
 
 			if c.ACMEEmail != ct.email {
 				t.Error("email mismatch")
-			}
-
-			// TODO: Test ACMERegistration values, like Status, ToS, etc.
-			if c.ACMERegistration == nil {
-				t.Error("acme registration shouldn't be nil")
 			}
 
 			if c.ACMEKey == nil {
